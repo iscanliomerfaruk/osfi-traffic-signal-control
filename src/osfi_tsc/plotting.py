@@ -82,7 +82,7 @@ def _save_both(fig: plt.Figure, out_dir: Path, stem: str) -> list[Path]:
     out_dir.mkdir(parents=True, exist_ok=True)
     pdf_path = out_dir / f"{stem}.pdf"
     png_path = out_dir / f"{stem}.png"
-    fig.savefig(pdf_path, bbox_inches="tight", dpi=300)
+    fig.savefig(pdf_path, bbox_inches="tight", dpi=300, metadata={"CreationDate": None})
     fig.savefig(png_path, bbox_inches="tight", dpi=300)
     plt.close(fig)
     return [pdf_path, png_path]
