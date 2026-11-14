@@ -1,0 +1,67 @@
+fuzzy:
+  shoulder_edges: true
+  mamdani_grid_step: 0.05
+  arrival_rate:
+    universe: [0.0, 12.0]
+    sigma: 1.0
+    centers:
+      Z: 0.0
+      Lo: 3.0
+      M: 6.0
+      H: 9.0
+  queue_length:
+    universe: [0.0, 60.0]
+    sigma: 5.0
+    centers:
+      Sh: 0.0
+      M: 15.0
+      L: 30.0
+      VL: 45.0
+  extension:
+    universe: [0.0, 25.0]
+    triangles:
+      Z: [0.0, 0.0, 7.5]
+      Sh: [0.0, 7.5, 12.5]
+      M: [7.5, 12.5, 17.5]
+      L: [12.5, 17.5, 22.5]
+    peaks:
+      Z: 0.0
+      Sh: 7.5
+      M: 12.5
+      L: 17.5
+
+simulator:
+  dt: 1.0
+  approaches: ["E", "S", "W", "N"]
+  lanes_per_approach: 2
+  service: "exponential"
+  service_rate_per_lane: 0.5
+  startup_lost_time: 2.0
+  yellow_time: 3.0
+  all_red_time: 2.0
+  vehicle_length_m: 7.0
+  arrival_window_s: 10.0
+  warmup_s: 600
+  measurement_s: 3600
+  sensor_noise:
+    queue_std_m: 0.0
+    arrival_std: 0.0
+
+demand:
+  table1_mamdani_exits:
+    E: 328
+    S: 398
+    W: 165
+    N: 173
+
+controller:
+  g_min: 7.0
+  g_max: 60.0
+  webster_cycle_bounds: [40.0, 180.0]
+  actuated_unit_extension: 3.0
+
+experiment:
+  num_seeds: 30
+  base_seed: 202501
+  scenarios: ["moderate", "heavy", "peak"]
+  controllers: ["Mamdani", "Sugeno", "OSFI-literal", "Webster", "Actuated"]
