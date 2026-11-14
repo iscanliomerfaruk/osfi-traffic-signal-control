@@ -232,8 +232,12 @@ class IntersectionSimulator:
         total_arrivals_so_far = 0
         total_departures_so_far = 0
         mu_total = self.service_rate_per_lane * float(self.lanes_per_approach) * self.dt
+        warmup_steps = int(round(self.warmup_s / self.dt))
 
         for step_idx in range(self.horizon_steps):
+            if step_idx == warmup_steps and warmup_steps > 0:
+                if hasattr(controller, "reset_diagnostics"):
+                    controller.reset_diagnostics()
             t_now = float(step_idx) * self.dt
 
             for app in APPROACHES:
