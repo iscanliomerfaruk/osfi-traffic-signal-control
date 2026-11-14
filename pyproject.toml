@@ -8,7 +8,7 @@ version = "0.1.0"
 description = "Reproduction and analysis of OSFI traffic signal control at an isolated intersection"
 readme = "README.md"
 requires-python = ">=3.10"
-license = {text = "MIT"}
+license = "MIT"
 authors = [
     {name = "Ömer Faruk İşcanlı"}
 ]
