@@ -19,11 +19,13 @@ class SugenoInference:
         self,
         stage: str = "fc1",
         shoulder_edges: bool = True,
+        mf_sigma_scale: float = 1.0,
     ) -> None:
         if stage not in ("fc1", "fc2"):
             raise ValueError(f"Unsupported stage: {stage}")
         self.stage = stage
         self.shoulder_edges = shoulder_edges
+        self.mf_sigma_scale = float(mf_sigma_scale)
         self.peaks = dict(EXTENSION_PEAKS)
         self.total_calls: int = 0
         self.fallback_count: int = 0
@@ -72,8 +74,16 @@ class SugenoInference:
         """Evaluate FC1: (arrival_rate, queue_current) -> Extension1."""
         self.total_calls += 1
         self.fc1_calls += 1
-        m1 = arrival_rate_memberships(arrival_rate, shoulder_edges=self.shoulder_edges)
-        m2 = queue_length_memberships(queue_current, shoulder_edges=self.shoulder_edges)
+        m1 = arrival_rate_memberships(
+            arrival_rate,
+            shoulder_edges=self.shoulder_edges,
+            sigma_scale=self.mf_sigma_scale,
+        )
+        m2 = queue_length_memberships(
+            queue_current,
+            shoulder_edges=self.shoulder_edges,
+            sigma_scale=self.mf_sigma_scale,
+        )
         return self.evaluate_rules_from_memberships(m1, m2, FC1_RULES)
 
     def infer_fc2(self, extension1: float, queue_others_max: float) -> float:
@@ -81,7 +91,11 @@ class SugenoInference:
         self.total_calls += 1
         self.fc2_calls += 1
         m1 = extension_input_memberships(extension1, shoulder_edges=self.shoulder_edges)
-        m2 = queue_length_memberships(queue_others_max, shoulder_edges=self.shoulder_edges)
+        m2 = queue_length_memberships(
+            queue_others_max,
+            shoulder_edges=self.shoulder_edges,
+            sigma_scale=self.mf_sigma_scale,
+        )
         return self.evaluate_rules_from_memberships(m1, m2, FC2_RULES)
 
     def infer(self, x1: float, x2: float) -> float:

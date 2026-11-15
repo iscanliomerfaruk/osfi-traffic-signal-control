@@ -11,6 +11,7 @@ from typing import Any
 import numpy as np
 from scipy.spatial.distance import cdist
 
+from osfi_tsc.fuzzy.rules import nearest_rule_fallback_for_inputs
 from osfi_tsc.inference.cri import (
     IMPLICATOR_MAP,
     bilinear_interpolate_2d,
@@ -70,8 +71,8 @@ def _select_b_from_objectives(
     return np.clip(b_out, 0.0, 1.0)
 
 
-_OSFI_PRECOMP_CACHE: dict[tuple[str, bool, int, int, float], tuple[Any, ...]] = {}
-_OSFI_RTABLE_CACHE: dict[tuple[str, str, bool, int, int, float], tuple[Any, ...]] = {}
+_OSFI_PRECOMP_CACHE: dict[tuple[Any, ...], tuple[Any, ...]] = {}
+_OSFI_RTABLE_CACHE: dict[tuple[Any, ...], tuple[Any, ...]] = {}
 _OSFI_MEM_LUT_CACHE: dict[str, dict[str, Any]] = {}
 
 
@@ -99,6 +100,8 @@ class OSFIDJStageEngine:
         tie_break: str = "smallest",
         defuzz_method: str = "centroid_above_floor",
         shoulder_edges: bool = True,
+        and_operator: str = "lukasiewicz",
+        mf_sigma_scale: float = 1.0,
         sigma1: float = 0.0,
         sigma2: float = 0.0,
         x1_pts: int = 61,
@@ -111,6 +114,8 @@ class OSFIDJStageEngine:
             raise ValueError(f"Unsupported implicator: {implicator}")
         if tie_break not in TIE_BREAK_OPTIONS:
             raise ValueError(f"Unsupported tie_break: {tie_break}")
+        if and_operator not in ("lukasiewicz", "min"):
+            raise ValueError(f"Unsupported and_operator: {and_operator}")
 
         self.stage = stage
         self.implicator_name = implicator
@@ -118,6 +123,8 @@ class OSFIDJStageEngine:
         self.tie_break = tie_break
         self.defuzz_method = defuzz_method
         self.shoulder_edges = shoulder_edges
+        self.and_operator = and_operator
+        self.mf_sigma_scale = float(mf_sigma_scale)
         self.sigma1 = float(sigma1)
         self.sigma2 = float(sigma2)
         self.x1_pts = int(x1_pts)
@@ -128,7 +135,15 @@ class OSFIDJStageEngine:
 
         self.b_grid = np.linspace(0.0, 1.0, self.b_pts, dtype=float)
 
-        p_key = (stage, bool(shoulder_edges), int(x1_pts), int(x2_pts), float(y_step))
+        p_key = (
+            stage,
+            bool(shoulder_edges),
+            int(x1_pts),
+            int(x2_pts),
+            float(y_step),
+            and_operator,
+            float(mf_sigma_scale),
+        )
         if p_key not in _OSFI_PRECOMP_CACHE:
             _OSFI_PRECOMP_CACHE[p_key] = precompute_stage_antecedents_and_consequents(
                 stage=stage,
@@ -136,6 +151,8 @@ class OSFIDJStageEngine:
                 x1_pts=x1_pts,
                 x2_pts=x2_pts,
                 y_step=y_step,
+                and_operator=and_operator,
+                mf_sigma_scale=mf_sigma_scale,
             )
         (
             self.x1_grid,
@@ -147,7 +164,16 @@ class OSFIDJStageEngine:
             self.out_mfs,
         ) = _OSFI_PRECOMP_CACHE[p_key]
 
-        r_key = (stage, implicator, bool(shoulder_edges), int(x1_pts), int(x2_pts), float(y_step))
+        r_key = (
+            stage,
+            implicator,
+            bool(shoulder_edges),
+            int(x1_pts),
+            int(x2_pts),
+            float(y_step),
+            and_operator,
+            float(mf_sigma_scale),
+        )
         if r_key not in _OSFI_RTABLE_CACHE:
             r_tables = np.asarray(
                 self.implicator_fn(self.a_rules[:, :, None], self.b_rules[:, None, :]),
@@ -187,6 +213,8 @@ class OSFIDJStageEngine:
             "tie_break": self.tie_break,
             "defuzz_method": self.defuzz_method,
             "shoulder_edges": self.shoulder_edges,
+            "and_operator": self.and_operator,
+            "mf_sigma_scale": self.mf_sigma_scale,
             "sigma1": self.sigma1,
             "sigma2": self.sigma2,
             "x1_pts": self.x1_pts,
@@ -336,8 +364,17 @@ class OSFIDJStageEngine:
 
     def infer_direct_with_flag(self, x1: float, x2: float) -> tuple[float, bool]:
         """Perform direct OSFI-DJ inference and return (crisp_output, fallback_used)."""
+        fb_val = nearest_rule_fallback_for_inputs(
+            x1,
+            x2,
+            stage=self.stage,
+            shoulder_edges=self.shoulder_edges,
+            mf_sigma_scale=self.mf_sigma_scale,
+        )
         b_agg = self.infer_aggregated_set(x1, x2)
-        return defuzzify_set(self.y_grid, b_agg, method=self.defuzz_method)
+        return defuzzify_set(
+            self.y_grid, b_agg, method=self.defuzz_method, fallback_value=fb_val
+        )
 
     def infer_direct(self, x1: float, x2: float) -> float:
         """Perform direct OSFI-DJ inference returning crisp output."""
@@ -394,6 +431,8 @@ class OSFIDJInference:
         tie_break: str = "smallest",
         defuzz_method: str = "centroid_above_floor",
         shoulder_edges: bool = True,
+        and_operator: str = "lukasiewicz",
+        mf_sigma_scale: float = 1.0,
         sigma_lambda: float = 0.0,
         sigma_queue: float = 0.0,
         sigma_ext1: float = 0.0,
@@ -408,6 +447,8 @@ class OSFIDJInference:
         self.tie_break = tie_break
         self.defuzz_method = defuzz_method
         self.shoulder_edges = shoulder_edges
+        self.and_operator = and_operator
+        self.mf_sigma_scale = float(mf_sigma_scale)
         self.sigma_lambda = float(sigma_lambda)
         self.sigma_queue = float(sigma_queue)
         self.sigma_ext1 = float(sigma_ext1)
@@ -420,6 +461,8 @@ class OSFIDJInference:
             tie_break=tie_break,
             defuzz_method=defuzz_method,
             shoulder_edges=shoulder_edges,
+            and_operator=and_operator,
+            mf_sigma_scale=self.mf_sigma_scale,
             sigma1=self.sigma_lambda,
             sigma2=self.sigma_queue,
         )
@@ -429,6 +472,8 @@ class OSFIDJInference:
             tie_break=tie_break,
             defuzz_method=defuzz_method,
             shoulder_edges=shoulder_edges,
+            and_operator=and_operator,
+            mf_sigma_scale=self.mf_sigma_scale,
             sigma1=self.sigma_ext1,
             sigma2=self.sigma_queue,
         )

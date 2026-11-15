@@ -28,12 +28,14 @@ class MamdaniInference:
         stage: str = "fc1",
         shoulder_edges: bool = True,
         grid_step: float = 0.05,
+        mf_sigma_scale: float = 1.0,
     ) -> None:
         if stage not in ("fc1", "fc2"):
             raise ValueError(f"Unsupported stage: {stage}")
         self.stage = stage
         self.shoulder_edges = shoulder_edges
         self.grid_step = grid_step
+        self.mf_sigma_scale = float(mf_sigma_scale)
         self.universe = np.arange(
             EXTENSION_UNIVERSE[0],
             EXTENSION_UNIVERSE[1] + 0.5 * grid_step,
@@ -90,8 +92,16 @@ class MamdaniInference:
         """Evaluate FC1: (arrival_rate, queue_current) -> Extension1."""
         self.total_calls += 1
         self.fc1_calls += 1
-        m1 = arrival_rate_memberships(arrival_rate, shoulder_edges=self.shoulder_edges)
-        m2 = queue_length_memberships(queue_current, shoulder_edges=self.shoulder_edges)
+        m1 = arrival_rate_memberships(
+            arrival_rate,
+            shoulder_edges=self.shoulder_edges,
+            sigma_scale=self.mf_sigma_scale,
+        )
+        m2 = queue_length_memberships(
+            queue_current,
+            shoulder_edges=self.shoulder_edges,
+            sigma_scale=self.mf_sigma_scale,
+        )
         return self._evaluate_rules(m1, m2, FC1_RULES)
 
     def infer_fc2(self, extension1: float, queue_others_max: float) -> float:
@@ -99,7 +109,11 @@ class MamdaniInference:
         self.total_calls += 1
         self.fc2_calls += 1
         m1 = extension_input_memberships(extension1, shoulder_edges=self.shoulder_edges)
-        m2 = queue_length_memberships(queue_others_max, shoulder_edges=self.shoulder_edges)
+        m2 = queue_length_memberships(
+            queue_others_max,
+            shoulder_edges=self.shoulder_edges,
+            sigma_scale=self.mf_sigma_scale,
+        )
         return self._evaluate_rules(m1, m2, FC2_RULES)
 
     def infer(self, x1: float, x2: float) -> float:

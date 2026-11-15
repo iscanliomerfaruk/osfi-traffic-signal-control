@@ -1,5 +1,7 @@
 fuzzy:
   shoulder_edges: true
+  and_operator: "lukasiewicz"
+  mf_sigma_scale: 1.0
   mamdani_grid_step: 0.05
   implicator: "lukasiewicz"
   tie_break: "smallest"

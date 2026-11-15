@@ -170,6 +170,59 @@ def format_rule_bases_markdown() -> str:
     return "\n".join(lines)
 
 
+from osfi_tsc.fuzzy.membership import (
+    EXTENSION_PEAKS,
+    arrival_rate_memberships,
+    extension_input_memberships,
+    queue_length_memberships,
+)
+
+DEAD_ZONE_THRESHOLD: float = 1e-6
+
+
+def nearest_rule_fallback(
+    m1: dict[str, float],
+    m2: dict[str, float],
+    rules: tuple[FuzzyRule, ...],
+    peaks: dict[str, float] | None = None,
+) -> float:
+    """Return peak of consequent for rule with largest min-based firing strength."""
+    pk = peaks if peaks is not None else EXTENSION_PEAKS
+    best_rule = rules[0]
+    best_alpha = -1.0
+    for rule in rules:
+        f1 = float(m1[rule.antecedent1])
+        f2 = 1.0 if rule.antecedent2 == "ANY" else float(m2[rule.antecedent2])
+        alpha_min = f1 if f1 < f2 else f2
+        if alpha_min > best_alpha:
+            best_alpha = alpha_min
+            best_rule = rule
+    return float(pk[best_rule.consequent])
+
+
+def nearest_rule_fallback_for_inputs(
+    x1: float,
+    x2: float,
+    stage: str = "fc1",
+    shoulder_edges: bool = True,
+    mf_sigma_scale: float = 1.0,
+) -> float:
+    """Compute nearest-rule fallback output for crisp inputs (x1, x2) in stage fc1 or fc2."""
+    if stage == "fc1":
+        m1 = arrival_rate_memberships(
+            x1, shoulder_edges=shoulder_edges, sigma_scale=mf_sigma_scale
+        )
+        m2 = queue_length_memberships(
+            x2, shoulder_edges=shoulder_edges, sigma_scale=mf_sigma_scale
+        )
+        return nearest_rule_fallback(m1, m2, FC1_RULES)
+    m1 = extension_input_memberships(x1, shoulder_edges=shoulder_edges)
+    m2 = queue_length_memberships(
+        x2, shoulder_edges=shoulder_edges, sigma_scale=mf_sigma_scale
+    )
+    return nearest_rule_fallback(m1, m2, FC2_RULES)
+
+
 def export_rule_bases_markdown(output_path: str | Path) -> None:
     """Write the markdown documentation of FC1 and FC2 rule bases to disk."""
     path = Path(output_path)

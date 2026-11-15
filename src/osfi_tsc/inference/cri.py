@@ -31,9 +31,15 @@ from osfi_tsc.fuzzy.operators import (
     tnorm_lukasiewicz,
     tnorm_min,
 )
-from osfi_tsc.fuzzy.rules import FC1_RULES, FC2_RULES, FuzzyRule
+from osfi_tsc.fuzzy.rules import (
+    DEAD_ZONE_THRESHOLD,
+    FC1_RULES,
+    FC2_RULES,
+    FuzzyRule,
+    nearest_rule_fallback_for_inputs,
+)
 
-IMPLICATOR_MAP: dict[str, Callable[[ Any, Any], Any]] = {
+IMPLICATOR_MAP: dict[str, Callable[[Any, Any], Any]] = {
     "lukasiewicz": implicator_lukasiewicz,
     "goguen": implicator_goguen,
     "kleene_dienes": implicator_kleene_dienes,
@@ -90,6 +96,7 @@ def defuzzify_set(
     y_grid: np.ndarray,
     b_agg: np.ndarray,
     method: str = "centroid_above_floor",
+    fallback_value: float = 0.0,
 ) -> tuple[float, bool]:
     """Defuzzify aggregated output set B*(y) and return (crisp_value, used_fallback)."""
     if method == "centroid_above_floor":
@@ -101,8 +108,8 @@ def defuzzify_set(
         raise ValueError(f"Unknown defuzzification method: {method}")
 
     area = float(np.sum(eff))
-    if area <= 1e-12:
-        return 0.0, True
+    if area <= 1e-12 or float(np.max(eff)) < DEAD_ZONE_THRESHOLD:
+        return float(fallback_value), True
     return defuzz_centroid(y_grid, eff), False
 
 
@@ -150,6 +157,8 @@ def precompute_stage_antecedents_and_consequents(
     x1_pts: int = 61,
     x2_pts: int = 61,
     y_step: float = 0.2,
+    and_operator: str = "lukasiewicz",
+    mf_sigma_scale: float = 1.0,
 ) -> tuple[
     np.ndarray,
     np.ndarray,
@@ -160,9 +169,13 @@ def precompute_stage_antecedents_and_consequents(
     dict[str, np.ndarray],
 ]:
     """Precompute grids, rule antecedents A_i(x1,x2), and rule consequents B_i(y)."""
+    if and_operator not in ("lukasiewicz", "min"):
+        raise ValueError(f"Unsupported and_operator: {and_operator}")
     if stage == "fc1":
         x1_grid = np.linspace(ARRIVAL_UNIVERSE[0], ARRIVAL_UNIVERSE[1], x1_pts)
-        m1_dict = arrival_rate_memberships(x1_grid, shoulder_edges=shoulder_edges)
+        m1_dict = arrival_rate_memberships(
+            x1_grid, shoulder_edges=shoulder_edges, sigma_scale=mf_sigma_scale
+        )
         rules = FC1_RULES
     elif stage == "fc2":
         x1_grid = np.linspace(EXTENSION_UNIVERSE[0], EXTENSION_UNIVERSE[1], x1_pts)
@@ -172,7 +185,9 @@ def precompute_stage_antecedents_and_consequents(
         raise ValueError(f"Unsupported stage: {stage}")
 
     x2_grid = np.linspace(QUEUE_UNIVERSE[0], QUEUE_UNIVERSE[1], x2_pts)
-    m2_dict = queue_length_memberships(x2_grid, shoulder_edges=shoulder_edges)
+    m2_dict = queue_length_memberships(
+        x2_grid, shoulder_edges=shoulder_edges, sigma_scale=mf_sigma_scale
+    )
 
     y_grid = np.arange(
         EXTENSION_UNIVERSE[0],
@@ -185,6 +200,7 @@ def precompute_stage_antecedents_and_consequents(
     a_list: list[np.ndarray] = []
     b_list: list[np.ndarray] = []
     ones_x2 = np.ones_like(x2_grid, dtype=float)
+    tnorm_fn = tnorm_lukasiewicz if and_operator == "lukasiewicz" else tnorm_min
 
     for rule in rules:
         a1 = np.asarray(m1_dict[rule.antecedent1], dtype=float)[:, None]
@@ -194,7 +210,7 @@ def precompute_stage_antecedents_and_consequents(
             else np.asarray(m2_dict[rule.antecedent2], dtype=float)
         )
         a2 = a2_vec[None, :]
-        a_joint = np.asarray(tnorm_lukasiewicz(a1, a2), dtype=float).ravel()
+        a_joint = np.asarray(tnorm_fn(a1, a2), dtype=float).ravel()
         a_list.append(a_joint)
         b_list.append(np.asarray(out_mfs[rule.consequent], dtype=float))
 
@@ -209,8 +225,8 @@ def precompute_stage_antecedents_and_consequents(
     )
 
 
-_STAGE_PRECOMP_CACHE: dict[tuple[str, bool, int, int, float], tuple[Any, ...]] = {}
-_CRI_RTABLE_CACHE: dict[tuple[str, str, bool, int, int, float], np.ndarray] = {}
+_STAGE_PRECOMP_CACHE: dict[tuple[Any, ...], tuple[Any, ...]] = {}
+_CRI_RTABLE_CACHE: dict[tuple[Any, ...], np.ndarray] = {}
 _CRI_MEM_LUT_CACHE: dict[str, dict[str, Any]] = {}
 
 
@@ -237,6 +253,8 @@ class CRIStageEngine:
         implicator: str = "lukasiewicz",
         defuzz_method: str = "centroid_above_floor",
         shoulder_edges: bool = True,
+        and_operator: str = "lukasiewicz",
+        mf_sigma_scale: float = 1.0,
         sigma1: float = 0.0,
         sigma2: float = 0.0,
         x1_pts: int = 61,
@@ -246,11 +264,15 @@ class CRIStageEngine:
     ) -> None:
         if implicator not in IMPLICATOR_MAP:
             raise ValueError(f"Unsupported implicator: {implicator}")
+        if and_operator not in ("lukasiewicz", "min"):
+            raise ValueError(f"Unsupported and_operator: {and_operator}")
         self.stage = stage
         self.implicator_name = implicator
         self.implicator_fn = IMPLICATOR_MAP[implicator]
         self.defuzz_method = defuzz_method
         self.shoulder_edges = shoulder_edges
+        self.and_operator = and_operator
+        self.mf_sigma_scale = float(mf_sigma_scale)
         self.sigma1 = float(sigma1)
         self.sigma2 = float(sigma2)
         self.x1_pts = int(x1_pts)
@@ -258,7 +280,15 @@ class CRIStageEngine:
         self.y_step = float(y_step)
         self.bilinear_singleton = bool(bilinear_singleton)
 
-        p_key = (stage, bool(shoulder_edges), int(x1_pts), int(x2_pts), float(y_step))
+        p_key = (
+            stage,
+            bool(shoulder_edges),
+            int(x1_pts),
+            int(x2_pts),
+            float(y_step),
+            and_operator,
+            float(mf_sigma_scale),
+        )
         if p_key not in _STAGE_PRECOMP_CACHE:
             _STAGE_PRECOMP_CACHE[p_key] = precompute_stage_antecedents_and_consequents(
                 stage=stage,
@@ -266,6 +296,8 @@ class CRIStageEngine:
                 x1_pts=x1_pts,
                 x2_pts=x2_pts,
                 y_step=y_step,
+                and_operator=and_operator,
+                mf_sigma_scale=mf_sigma_scale,
             )
         (
             self.x1_grid,
@@ -277,7 +309,16 @@ class CRIStageEngine:
             self.out_mfs,
         ) = _STAGE_PRECOMP_CACHE[p_key]
 
-        r_key = (stage, implicator, bool(shoulder_edges), int(x1_pts), int(x2_pts), float(y_step))
+        r_key = (
+            stage,
+            implicator,
+            bool(shoulder_edges),
+            int(x1_pts),
+            int(x2_pts),
+            float(y_step),
+            and_operator,
+            float(mf_sigma_scale),
+        )
         if r_key not in _CRI_RTABLE_CACHE:
             _CRI_RTABLE_CACHE[r_key] = np.asarray(
                 self.implicator_fn(self.a_rules[:, :, None], self.b_rules[:, None, :]),
@@ -291,6 +332,8 @@ class CRIStageEngine:
             "implicator": self.implicator_name,
             "defuzz_method": self.defuzz_method,
             "shoulder_edges": self.shoulder_edges,
+            "and_operator": self.and_operator,
+            "mf_sigma_scale": self.mf_sigma_scale,
             "sigma1": self.sigma1,
             "sigma2": self.sigma2,
             "x1_pts": self.x1_pts,
@@ -360,8 +403,17 @@ class CRIStageEngine:
 
     def infer_direct_with_flag(self, x1: float, x2: float) -> tuple[float, bool]:
         """Perform direct CRI inference and return (crisp_output, fallback_used)."""
+        fb_val = nearest_rule_fallback_for_inputs(
+            x1,
+            x2,
+            stage=self.stage,
+            shoulder_edges=self.shoulder_edges,
+            mf_sigma_scale=self.mf_sigma_scale,
+        )
         b_agg = self.infer_aggregated_set(x1, x2)
-        return defuzzify_set(self.y_grid, b_agg, method=self.defuzz_method)
+        return defuzzify_set(
+            self.y_grid, b_agg, method=self.defuzz_method, fallback_value=fb_val
+        )
 
     def infer_direct(self, x1: float, x2: float) -> float:
         """Perform direct CRI inference returning crisp output."""
@@ -378,6 +430,8 @@ class CRIInference:
         implicator: str = "lukasiewicz",
         defuzz_method: str = "centroid_above_floor",
         shoulder_edges: bool = True,
+        and_operator: str = "lukasiewicz",
+        mf_sigma_scale: float = 1.0,
         sigma_lambda: float = 0.0,
         sigma_queue: float = 0.0,
         sigma_ext1: float = 0.0,
@@ -391,6 +445,8 @@ class CRIInference:
         self.implicator = implicator
         self.defuzz_method = defuzz_method
         self.shoulder_edges = shoulder_edges
+        self.and_operator = and_operator
+        self.mf_sigma_scale = float(mf_sigma_scale)
         self.sigma_lambda = float(sigma_lambda)
         self.sigma_queue = float(sigma_queue)
         self.sigma_ext1 = float(sigma_ext1)
@@ -402,6 +458,8 @@ class CRIInference:
             implicator=implicator,
             defuzz_method=defuzz_method,
             shoulder_edges=shoulder_edges,
+            and_operator=and_operator,
+            mf_sigma_scale=self.mf_sigma_scale,
             sigma1=self.sigma_lambda,
             sigma2=self.sigma_queue,
         )
@@ -410,6 +468,8 @@ class CRIInference:
             implicator=implicator,
             defuzz_method=defuzz_method,
             shoulder_edges=shoulder_edges,
+            and_operator=and_operator,
+            mf_sigma_scale=self.mf_sigma_scale,
             sigma1=self.sigma_ext1,
             sigma2=self.sigma_queue,
         )

@@ -59,15 +59,42 @@ def test_fc2_monotonicity_in_both_inputs(engine_cls: type) -> None:
             assert grid[i][j + 1] <= grid[i][j] + 1e-9
 
 
-def test_osfi_literal_fallback_to_sugeno() -> None:
-    """Verify OSFI-literal falls back to Sugeno output and increments fallback counter when sum(alpha)==0."""
-    osfi = OSFILiteralInference(stage="fc1", shoulder_edges=True)
-    sugeno = SugenoInference(stage="fc1", shoulder_edges=True)
+def test_unified_dead_zone_nearest_rule_fallback() -> None:
+    """Verify OSFI-literal, OSFI-DJ-S, and CRI-S use identical nearest-rule fallback in dead zones."""
+    from osfi_tsc.fuzzy.rules import nearest_rule_fallback_for_inputs
+    from osfi_tsc.inference.cri import CRIInference
+    from osfi_tsc.inference.osfi_dj import OSFIDJInference
 
-    out_osfi = osfi.infer(1.5, 7.5)
-    out_sugeno = sugeno.infer(1.5, 7.5)
+    osfi_lit = OSFILiteralInference(stage="fc1", shoulder_edges=True)
+    osfi_dj = OSFIDJInference(stage="fc1", shoulder_edges=True, use_lut=False)
+    cri_s = CRIInference(stage="fc1", shoulder_edges=True, use_lut=False)
 
-    assert osfi.fallback_count == 1
-    assert osfi.total_calls == 1
-    assert osfi.fallback_rate == pytest.approx(1.0)
-    assert out_osfi == pytest.approx(out_sugeno, abs=1e-12)
+    expected_peak = nearest_rule_fallback_for_inputs(
+        1.5, 7.5, stage="fc1", shoulder_edges=True
+    )
+    out_lit = osfi_lit.infer(1.5, 7.5)
+    out_dj = osfi_dj.infer(1.5, 7.5)
+    out_cri = cri_s.infer(1.5, 7.5)
+
+    assert osfi_lit.fallback_count == 1
+    assert osfi_dj.fallback_count == 1
+    assert cri_s.fallback_count == 1
+    assert out_lit == pytest.approx(expected_peak, abs=1e-12)
+    assert out_dj == pytest.approx(expected_peak, abs=1e-12)
+    assert out_cri == pytest.approx(expected_peak, abs=1e-12)
+
+
+def test_dead_zone_eliminated_by_min_and_or_widened_sigma() -> None:
+    """Verify min AND and mf_sigma_scale=1.5 eliminate dead-zone fallbacks at crossover (1.5, 7.5)."""
+    osfi_min = OSFILiteralInference(
+        stage="fc1", shoulder_edges=True, and_operator="min"
+    )
+    osfi_wide = OSFILiteralInference(
+        stage="fc1", shoulder_edges=True, mf_sigma_scale=1.5
+    )
+
+    _ = osfi_min.infer(1.5, 7.5)
+    _ = osfi_wide.infer(1.5, 7.5)
+
+    assert osfi_min.fallback_count == 0
+    assert osfi_wide.fallback_count == 0

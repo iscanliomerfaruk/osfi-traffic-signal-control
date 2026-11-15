@@ -45,6 +45,7 @@ STAGE2_CONTROLLER_ORDER: tuple[str, ...] = (
     "Sugeno",
     "OSFI-literal",
     "OSFI-DJ-S",
+    "CRI-S",
     "CRI-NS",
     "OSFI-DJ-NS",
     "OSFI-DJ-NS-mis",
@@ -57,6 +58,7 @@ FUZZY_CONTROLLER_NAMES: tuple[str, ...] = (
     "Sugeno",
     "OSFI-literal",
     "OSFI-DJ-S",
+    "CRI-S",
     "CRI-NS",
     "OSFI-DJ-NS",
     "OSFI-DJ-NS-mis",
@@ -114,6 +116,8 @@ def build_controller(
     noise_cfg = sim_cfg.get("sensor_noise", {})
 
     shoulder = bool(fuzzy_cfg.get("shoulder_edges", True))
+    and_operator = str(fuzzy_cfg.get("and_operator", "lukasiewicz"))
+    mf_sigma_scale = float(fuzzy_cfg.get("mf_sigma_scale", 1.0))
     grid_step = float(fuzzy_cfg.get("mamdani_grid_step", 0.05))
     implicator = str(fuzzy_cfg.get("implicator", "lukasiewicz"))
     tie_break = str(fuzzy_cfg.get("tie_break", "smallest"))
@@ -128,13 +132,24 @@ def build_controller(
     spm_mode = str(ctrl_cfg.get("spm_mode", "gpe_first"))
 
     if name == "Mamdani":
-        engine: Any = MamdaniInference(shoulder_edges=shoulder, grid_step=grid_step)
+        engine: Any = MamdaniInference(
+            shoulder_edges=shoulder,
+            grid_step=grid_step,
+            mf_sigma_scale=mf_sigma_scale,
+        )
         return FuzzyController(engine=engine, g_min=g_min, g_max=g_max, spm_mode=spm_mode)
     if name == "Sugeno":
-        engine = SugenoInference(shoulder_edges=shoulder)
+        engine = SugenoInference(
+            shoulder_edges=shoulder,
+            mf_sigma_scale=mf_sigma_scale,
+        )
         return FuzzyController(engine=engine, g_min=g_min, g_max=g_max, spm_mode=spm_mode)
     if name == "OSFI-literal":
-        engine = OSFILiteralInference(shoulder_edges=shoulder)
+        engine = OSFILiteralInference(
+            shoulder_edges=shoulder,
+            and_operator=and_operator,
+            mf_sigma_scale=mf_sigma_scale,
+        )
         return FuzzyController(engine=engine, g_min=g_min, g_max=g_max, spm_mode=spm_mode)
     if name == "OSFI-DJ-S":
         engine = OSFIDJInference(
@@ -142,6 +157,22 @@ def build_controller(
             tie_break=tie_break,
             defuzz_method=defuzz_method,
             shoulder_edges=shoulder,
+            and_operator=and_operator,
+            mf_sigma_scale=mf_sigma_scale,
+            sigma_lambda=0.0,
+            sigma_queue=0.0,
+            sigma_ext1=0.0,
+            use_lut=use_lut,
+            cache_dir=cache_dir,
+        )
+        return FuzzyController(engine=engine, g_min=g_min, g_max=g_max, spm_mode=spm_mode)
+    if name == "CRI-S":
+        engine = CRIInference(
+            implicator=implicator,
+            defuzz_method=defuzz_method,
+            shoulder_edges=shoulder,
+            and_operator=and_operator,
+            mf_sigma_scale=mf_sigma_scale,
             sigma_lambda=0.0,
             sigma_queue=0.0,
             sigma_ext1=0.0,
@@ -155,6 +186,8 @@ def build_controller(
             implicator=implicator,
             defuzz_method=defuzz_method,
             shoulder_edges=shoulder,
+            and_operator=and_operator,
+            mf_sigma_scale=mf_sigma_scale,
             sigma_lambda=sig1,
             sigma_queue=sig2,
             sigma_ext1=0.0,
@@ -169,6 +202,8 @@ def build_controller(
             tie_break=tie_break,
             defuzz_method=defuzz_method,
             shoulder_edges=shoulder,
+            and_operator=and_operator,
+            mf_sigma_scale=mf_sigma_scale,
             sigma_lambda=sig1,
             sigma_queue=sig2,
             sigma_ext1=0.0,
@@ -183,6 +218,8 @@ def build_controller(
             tie_break=tie_break,
             defuzz_method=defuzz_method,
             shoulder_edges=shoulder,
+            and_operator=and_operator,
+            mf_sigma_scale=mf_sigma_scale,
             sigma_lambda=sig1_mis,
             sigma_queue=sig2_mis,
             sigma_ext1=0.0,

@@ -102,10 +102,12 @@ def triangular_mf(
 def arrival_rate_memberships(
     x: ArrayOrFloat,
     shoulder_edges: bool = True,
+    sigma_scale: float = 1.0,
 ) -> dict[str, ArrayOrFloat]:
     """Compute memberships for Arrival Rate lambda in {Z, Lo, M, H}."""
     clipped = clip_to_universe(x, ARRIVAL_UNIVERSE)
     terms = list(ARRIVAL_CENTERS.keys())
+    eff_sigma = ARRIVAL_SIGMA * float(sigma_scale)
     out: dict[str, ArrayOrFloat] = {}
     for idx, term in enumerate(terms):
         left = shoulder_edges and (idx == 0)
@@ -113,7 +115,7 @@ def arrival_rate_memberships(
         out[term] = gaussian_mf(
             clipped,
             center=ARRIVAL_CENTERS[term],
-            sigma=ARRIVAL_SIGMA,
+            sigma=eff_sigma,
             left_shoulder=left,
             right_shoulder=right,
         )
@@ -123,10 +125,12 @@ def arrival_rate_memberships(
 def queue_length_memberships(
     x: ArrayOrFloat,
     shoulder_edges: bool = True,
+    sigma_scale: float = 1.0,
 ) -> dict[str, ArrayOrFloat]:
     """Compute memberships for Queue Length q in {Sh, M, L, VL}."""
     clipped = clip_to_universe(x, QUEUE_UNIVERSE)
     terms = list(QUEUE_CENTERS.keys())
+    eff_sigma = QUEUE_SIGMA * float(sigma_scale)
     out: dict[str, ArrayOrFloat] = {}
     for idx, term in enumerate(terms):
         left = shoulder_edges and (idx == 0)
@@ -134,7 +138,7 @@ def queue_length_memberships(
         out[term] = gaussian_mf(
             clipped,
             center=QUEUE_CENTERS[term],
-            sigma=QUEUE_SIGMA,
+            sigma=eff_sigma,
             left_shoulder=left,
             right_shoulder=right,
         )
