@@ -970,7 +970,7 @@ def plot_dead_zone_map(out_dir: Path) -> list[Path]:
     for ax, (title, and_op, scale) in zip(axes, variants):
         fmap = compute_max_firing_map(lam_grid, q_grid, and_op, scale)
         dead_frac = 100.0 * float(np.mean(fmap < 1e-6))
-        last_im = ax.pcolormesh(lam_grid, q_grid, fmap, cmap="magma", vmin=0.0, vmax=1.0, shading="auto")
+        last_im = ax.pcolormesh(lam_grid, q_grid, fmap, cmap="magma", vmin=0.0, vmax=1.0, shading="auto", rasterized=True)
         if np.any(fmap < 1e-6):
             ax.contourf(lam_grid, q_grid, fmap, levels=[-1.0, 1e-6], colors="none", hatches=["////"])
             ax.contour(lam_grid, q_grid, fmap, levels=[1e-6], colors="#00E5FF", linewidths=1.3)

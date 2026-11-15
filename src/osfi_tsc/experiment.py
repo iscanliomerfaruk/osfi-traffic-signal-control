@@ -399,7 +399,7 @@ def format_paper_vs_ours_markdown(
         "`1.011–1.210 s/veh` across a 4-phase intersection where only one approach receives green at a time. "
         "Under any physically realizable 4-phase signal cycle ($G_{\\min} = 7\\text{ s}$, intergreen $= 5\\text{ s}$, "
         "minimum cycle $\\ge 48\\text{ s}$), vehicles arriving on the three red approaches wait tens of seconds on average. "
-        "Hence absolute delay magnitudes in our queueing simulation are on the physically expected scale ($\\sim 50–180\\text{ s/veh}$), "
+        "Hence absolute delay magnitudes in our queueing simulation are on the physically expected scale ($\\sim 16–95\\text{ s/veh}$), "
         "and comparison focuses on **relative rankings, directional changes, and structural behavior**.",
         "> Furthermore, in the paper's Tables 1 and 2, the `Average Exit (veh)` percentage columns report lower OSFI throughput "
         "(e.g., `310` vs `328` in Table 1 Phase E) as a positive `+5.49%` improvement; in our columns we use the physically "
