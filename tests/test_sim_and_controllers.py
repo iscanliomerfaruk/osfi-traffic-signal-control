@@ -26,9 +26,17 @@ from osfi_tsc.sim import (
 
 
 def test_webster_flow_ratio_under_095() -> None:
-    """Verify Webster flow ratio Y < 0.95 for moderate, heavy, and peak scenarios."""
-    for name in ("moderate", "heavy", "peak"):
-        y_map, y_tot = compute_webster_flow_ratios(name)
+    """Verify calibrated YAML scenarios load properly and Webster flow ratio Y < 0.95."""
+    expected_means = {
+        "moderate": 1100.0,
+        "heavy": 1500.0,
+        "peak": 1625.0,
+        "stress": 1800.0,
+    }
+    for name, exp_vph in expected_means.items():
+        scen = ScenarioDemand.from_name(name)
+        assert scen.mean_total_demand_vph() == pytest.approx(exp_vph, abs=1e-9)
+        y_map, y_tot = compute_webster_flow_ratios(scen)
         assert y_tot < 0.95
         assert sum(y_map.values()) == pytest.approx(y_tot, abs=1e-12)
 

@@ -1,7 +1,7 @@
 name: "peak"
 profile: "trapezoid"
-base_demand_vph: 1500.0
-peak_demand_vph: 2700.0
+base_demand_vph: 1100.0
+peak_demand_vph: 1800.0
 ramp_up_s: 900.0
 plateau_s: 1800.0
 ramp_down_s: 900.0

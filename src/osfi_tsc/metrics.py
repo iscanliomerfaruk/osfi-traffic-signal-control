@@ -41,6 +41,7 @@ def compute_run_metrics(
     all_departed_delays: list[float] = []
     all_incl_queued_delays: list[float] = []
     total_throughput = 0
+    total_arrivals = 0
     approach_mean_q_veh: list[float] = []
     approach_max_q_veh: list[float] = []
     approach_mean_q_m: list[float] = []
@@ -66,12 +67,19 @@ def compute_run_metrics(
         all_departed_delays.extend(dep_delays)
         all_incl_queued_delays.extend(comb_delays)
 
+        arrivals_in_window = len(dep_post_warmup) + len(rem_post_warmup)
         exits_in_window = sum(
             1
             for v in result.departed_vehicles[app]
             if v.departure_time is not None and v.departure_time >= warmup_s
         )
+        total_arrivals += arrivals_in_window
         total_throughput += exits_in_window
+        app_discharge = (
+            float(exits_in_window) / float(arrivals_in_window)
+            if arrivals_in_window > 0
+            else 1.0
+        )
 
         q_veh_slice = result.queue_veh_history[app][warmup_steps:]
         q_m_slice = result.queue_m_history[app][warmup_steps:]
@@ -96,7 +104,9 @@ def compute_run_metrics(
                 "avg_delay_incl_queued_s": (
                     float(np.mean(comb_delays)) if comb_delays else 0.0
                 ),
+                "arrivals_veh": int(arrivals_in_window),
                 "throughput_veh": int(exits_in_window),
+                "discharge_ratio": app_discharge,
                 "mean_queue_veh": m_q_veh,
                 "max_queue_veh": x_q_veh,
                 "mean_queue_m": m_q_m,
@@ -109,6 +119,11 @@ def compute_run_metrics(
             }
         )
 
+    total_discharge = (
+        float(total_throughput) / float(total_arrivals)
+        if total_arrivals > 0
+        else 1.0
+    )
     rows.append(
         {
             "scenario": result.scenario_name,
@@ -123,7 +138,9 @@ def compute_run_metrics(
                 if all_incl_queued_delays
                 else 0.0
             ),
+            "arrivals_veh": int(total_arrivals),
             "throughput_veh": int(total_throughput),
+            "discharge_ratio": total_discharge,
             "mean_queue_veh": float(np.mean(approach_mean_q_veh)),
             "max_queue_veh": float(np.max(approach_max_q_veh)),
             "mean_queue_m": float(np.mean(approach_mean_q_m)),
@@ -176,7 +193,9 @@ def summarize_metrics_with_ci(raw_df: pd.DataFrame) -> pd.DataFrame:
     metric_cols = [
         "avg_delay_s",
         "avg_delay_incl_queued_s",
+        "arrivals_veh",
         "throughput_veh",
+        "discharge_ratio",
         "mean_queue_veh",
         "max_queue_veh",
         "mean_queue_m",

@@ -491,12 +491,143 @@ def format_input_coverage_markdown(cov_summary_df: pd.DataFrame) -> str:
     return "\n".join(lines)
 
 
+def verify_sanity_gates(
+    summary_df: pd.DataFrame,
+    cov_summary_df: pd.DataFrame | None = None,
+    runner_name: str = "reproduction",
+    log_path: str | Path | None = "docs/experiment_log.md",
+) -> str:
+    """Verify discharge ratio (>=97%) and Mamdani queue-input coverage sanity gates."""
+    overall = summary_df[summary_df["approach"] == "overall"].copy()
+    failures: list[str] = []
+    lines: list[str] = [
+        f"## Sanity Gate Check (`{runner_name}`)",
+        "",
+        "### Gate 1 — Measurement-Window Discharge Ratio ($\\ge 97\\%$ in non-stress scenarios)",
+        "",
+        "| Scenario | `Webster` Discharge (%) | Best Fuzzy Controller | Best Fuzzy Discharge (%) | Status |",
+        "| :--- | ---: | :--- | ---: | :---: |",
+    ]
+
+    for scen in ("moderate", "heavy", "peak"):
+        sub = overall[overall["scenario"] == scen]
+        if sub.empty:
+            continue
+        web_rows = sub[sub["controller"] == "Webster"]
+        if web_rows.empty:
+            failures.append(f"[{runner_name}] Missing Webster row for scenario '{scen}'")
+            continue
+        if "discharge_ratio_mean" in web_rows.columns:
+            web_ratio = float(web_rows.iloc[0]["discharge_ratio_mean"])
+        else:
+            web_ratio = float(web_rows.iloc[0]["throughput_veh_mean"]) / max(
+                1.0, float(web_rows.iloc[0]["arrivals_veh_mean"])
+            )
+
+        fuzzy_sub = sub[~sub["controller"].isin(["Webster", "Actuated"])]
+        if fuzzy_sub.empty:
+            failures.append(f"[{runner_name}] Missing fuzzy rows for scenario '{scen}'")
+            continue
+        if "discharge_ratio_mean" in fuzzy_sub.columns:
+            best_idx = fuzzy_sub["discharge_ratio_mean"].astype(float).idxmax()
+            best_row = fuzzy_sub.loc[best_idx]
+            best_fuzzy_name = str(best_row["controller"])
+            best_fuzzy_ratio = float(best_row["discharge_ratio_mean"])
+        else:
+            ratios = fuzzy_sub["throughput_veh_mean"].astype(float) / fuzzy_sub[
+                "arrivals_veh_mean"
+            ].astype(float).clip(lower=1.0)
+            best_idx = ratios.idxmax()
+            best_fuzzy_name = str(fuzzy_sub.loc[best_idx, "controller"])
+            best_fuzzy_ratio = float(ratios.loc[best_idx])
+
+        ok = (web_ratio >= 0.97) and (best_fuzzy_ratio >= 0.97)
+        status = "PASS" if ok else "FAIL"
+        lines.append(
+            f"| `{scen}` | {web_ratio*100:.2f}% | `{best_fuzzy_name}` | {best_fuzzy_ratio*100:.2f}% | **{status}** |"
+        )
+        if not ok:
+            failures.append(
+                f"[{runner_name}] Discharge gate failed in '{scen}': "
+                f"Webster={web_ratio*100:.2f}%, best_fuzzy({best_fuzzy_name})={best_fuzzy_ratio*100:.2f}% (< 97%)"
+            )
+
+    if cov_summary_df is not None and not cov_summary_df.empty:
+        lines.extend(
+            [
+                "",
+                "### Gate 2 — `Mamdani` Queue-Input Coverage ($\\ge 3$ linguistic sets with $\\ge 5\\%$ share in `moderate` and `heavy`)",
+                "",
+                "| Scenario | $q_{\\text{cur}}$ (`Sh / M / L / VL`) | Sets $\\ge 5\\%$ ($q_{\\text{cur}}$) | $q_{\\text{other}}$ (`Sh / M / L / VL`) | Sets $\\ge 5\\%$ ($q_{\\text{other}}$) | Status |",
+                "| :--- | :---: | :---: | :---: | :---: | :---: |",
+            ]
+        )
+        for scen in ("moderate", "heavy"):
+            c_sub = cov_summary_df[
+                (cov_summary_df["scenario"] == scen)
+                & (cov_summary_df["controller"] == "Mamdani")
+            ]
+            if c_sub.empty:
+                failures.append(
+                    f"[{runner_name}] Missing Mamdani coverage row for scenario '{scen}'"
+                )
+                continue
+            r = c_sub.iloc[0]
+            qcur_vals = [
+                float(r[f"queue_current_{t}"]) for t in ("Sh", "M", "L", "VL")
+            ]
+            qoth_vals = [
+                float(r[f"queue_others_max_{t}"]) for t in ("Sh", "M", "L", "VL")
+            ]
+            n_qcur = sum(1 for v in qcur_vals if v >= 0.05)
+            n_qoth = sum(1 for v in qoth_vals if v >= 0.05)
+            ok_cov = max(n_qcur, n_qoth) >= 3
+            status = "PASS" if ok_cov else "FAIL"
+            qcur_s = " / ".join(f"{v*100:.1f}%" for v in qcur_vals)
+            qoth_s = " / ".join(f"{v*100:.1f}%" for v in qoth_vals)
+            lines.append(
+                f"| `{scen}` | {qcur_s} | {n_qcur} | {qoth_s} | {n_qoth} | **{status}** |"
+            )
+            if not ok_cov:
+                failures.append(
+                    f"[{runner_name}] Coverage gate failed in '{scen}': "
+                    f"Mamdani has {n_qcur} sets >=5% in q_cur and {n_qoth} in q_other (need >=3)"
+                )
+
+    lines.append("")
+    report_text = "\n".join(lines)
+    print("\n" + report_text)
+
+    if log_path is not None:
+        lp = Path(log_path)
+        lp.parent.mkdir(parents=True, exist_ok=True)
+        marker_start = f"<!-- SANITY_GATE_START:{runner_name} -->"
+        marker_end = f"<!-- SANITY_GATE_END:{runner_name} -->"
+        block = f"{marker_start}\n{report_text}\n{marker_end}"
+        if lp.is_file():
+            existing = lp.read_text(encoding="utf-8")
+            if marker_start in existing and marker_end in existing:
+                pre = existing.split(marker_start)[0]
+                post = existing.split(marker_end)[1]
+                lp.write_text(f"{pre}{block}{post}", encoding="utf-8")
+            else:
+                lp.write_text(existing.rstrip() + "\n\n" + block + "\n", encoding="utf-8")
+        else:
+            lp.write_text("# Experiment Log & Sanity Gate Verification\n\n" + block + "\n", encoding="utf-8")
+
+    if failures:
+        raise RuntimeError("Sanity gate check failed:\n" + "\n".join(failures))
+
+    return report_text
+
+
 def run_all_experiments(
     config_path: str | Path = "configs/default.yaml",
     output_root: str | Path = "results",
     n_workers: int | None = None,
+    log_path: str | Path | None = "docs/experiment_log.md",
 ) -> dict[str, pd.DataFrame]:
-    """Execute full 5 controllers x 3 scenarios x 30 seeds experiment suite."""
+    """Execute full 5 controllers x 4 scenarios x 30 seeds experiment suite."""
     config = load_config(config_path)
     sim_cfg = config.get("simulator", {})
     exp_cfg = config.get("experiment", {})
@@ -506,7 +637,7 @@ def run_all_experiments(
         lanes_per_approach=int(sim_cfg.get("lanes_per_approach", 2)),
     )
 
-    scenarios = list(exp_cfg.get("scenarios", ["moderate", "heavy", "peak"]))
+    scenarios = list(exp_cfg.get("scenarios", ["moderate", "heavy", "peak", "stress"]))
     num_seeds = int(exp_cfg.get("num_seeds", 30))
     base_seed = int(exp_cfg.get("base_seed", 202501))
 
@@ -541,16 +672,25 @@ def run_all_experiments(
         ["scenario", "controller", "seed"]
     ).reset_index(drop=True)
 
+    summary_df = summarize_metrics_with_ci(raw_df)
+    cov_summary_df = summarize_input_coverage(cov_df)
+
+    verify_sanity_gates(
+        summary_df=summary_df,
+        cov_summary_df=cov_summary_df,
+        runner_name="run_reproduction",
+        log_path=log_path,
+    )
+
     out_dir = Path(output_root)
     raw_dir = out_dir / "raw"
-    sum_dir = out_dir / "summary"
+    sum_dir = out_dir / "tables"
     raw_dir.mkdir(parents=True, exist_ok=True)
     sum_dir.mkdir(parents=True, exist_ok=True)
 
     raw_df.to_csv(raw_dir / "reproduction_runs.csv", index=False)
     cov_df.to_csv(raw_dir / "input_coverage_runs.csv", index=False)
 
-    summary_df = summarize_metrics_with_ci(raw_df)
     summary_df.to_csv(sum_dir / "metrics_summary_ci.csv", index=False)
 
     wilcoxon_df = run_paired_wilcoxon_tests(raw_df)
@@ -559,7 +699,6 @@ def run_all_experiments(
         format_wilcoxon_markdown(wilcoxon_df), encoding="utf-8"
     )
 
-    cov_summary_df = summarize_input_coverage(cov_df)
     cov_summary_df.to_csv(sum_dir / "input_coverage_summary.csv", index=False)
     (sum_dir / "input_coverage_summary.md").write_text(
         format_input_coverage_markdown(cov_summary_df), encoding="utf-8"

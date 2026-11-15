@@ -3,6 +3,8 @@
 from osfi_tsc.sim.demand import (
     APPROACHES,
     DIRECTIONAL_SPLITS,
+    NON_STRESS_SCENARIOS,
+    SCENARIO_NAMES,
     TABLE1_MAMDANI_EXITS,
     ScenarioDemand,
     compute_directional_splits,
@@ -24,6 +26,8 @@ from osfi_tsc.sim.intersection import (
 __all__ = [
     "APPROACHES",
     "DIRECTIONAL_SPLITS",
+    "NON_STRESS_SCENARIOS",
+    "SCENARIO_NAMES",
     "TABLE1_MAMDANI_EXITS",
     "ScenarioDemand",
     "compute_directional_splits",

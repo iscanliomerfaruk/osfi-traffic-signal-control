@@ -3,10 +3,14 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from pathlib import Path
 from typing import Any
 import numpy as np
+import yaml
 
 APPROACHES: tuple[str, ...] = ("E", "S", "W", "N")
+SCENARIO_NAMES: tuple[str, ...] = ("moderate", "heavy", "peak", "stress")
+NON_STRESS_SCENARIOS: tuple[str, ...] = ("moderate", "heavy", "peak")
 
 TABLE1_MAMDANI_EXITS: dict[str, int] = {
     "E": 328,
@@ -28,38 +32,44 @@ def compute_directional_splits(
 DIRECTIONAL_SPLITS: dict[str, float] = compute_directional_splits()
 
 
+def _resolve_scenario_yaml_path(name: str, scenarios_dir: str | Path | None = None) -> Path:
+    key = name.lower().strip()
+    if scenarios_dir is not None:
+        candidate = Path(scenarios_dir) / f"{key}.yaml"
+        if candidate.is_file():
+            return candidate
+    repo_root = Path(__file__).resolve().parents[3]
+    for base in (repo_root / "configs" / "scenarios", Path("configs") / "scenarios"):
+        candidate = base / f"{key}.yaml"
+        if candidate.is_file():
+            return candidate
+    raise ValueError(f"Unknown scenario name or missing YAML config: {name}")
+
+
 @dataclass(frozen=True)
 class ScenarioDemand:
-    """Demand specification for a simulation scenario."""
+    """Demand specification for a simulation scenario loaded from YAML."""
 
     name: str
     profile: str
-    total_demand_vph: float = 1800.0
-    base_demand_vph: float = 1500.0
-    peak_demand_vph: float = 2700.0
-    ramp_up_s: float = 900.0
-    plateau_s: float = 1800.0
-    ramp_down_s: float = 900.0
+    total_demand_vph: float = 0.0
+    base_demand_vph: float = 0.0
+    peak_demand_vph: float = 0.0
+    ramp_up_s: float = 0.0
+    plateau_s: float = 0.0
+    ramp_down_s: float = 0.0
 
     @classmethod
-    def from_name(cls, name: str) -> ScenarioDemand:
-        """Create standard scenario demand from scenario name."""
-        key = name.lower()
-        if key == "moderate":
-            return cls(name="moderate", profile="constant", total_demand_vph=1800.0)
-        if key == "heavy":
-            return cls(name="heavy", profile="constant", total_demand_vph=2500.0)
-        if key == "peak":
-            return cls(
-                name="peak",
-                profile="trapezoid",
-                base_demand_vph=1500.0,
-                peak_demand_vph=2700.0,
-                ramp_up_s=900.0,
-                plateau_s=1800.0,
-                ramp_down_s=900.0,
-            )
-        raise ValueError(f"Unknown scenario name: {name}")
+    def from_name(
+        cls,
+        name: str,
+        scenarios_dir: str | Path | None = None,
+    ) -> ScenarioDemand:
+        """Load scenario demand specification from configs/scenarios/<name>.yaml."""
+        yaml_path = _resolve_scenario_yaml_path(name, scenarios_dir=scenarios_dir)
+        with yaml_path.open("r", encoding="utf-8") as fh:
+            data = dict(yaml.safe_load(fh))
+        return cls.from_dict(data)
 
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> ScenarioDemand:
@@ -74,11 +84,11 @@ class ScenarioDemand:
         return cls(
             name=str(data["name"]),
             profile="trapezoid",
-            base_demand_vph=float(data.get("base_demand_vph", 1500.0)),
-            peak_demand_vph=float(data.get("peak_demand_vph", 2700.0)),
-            ramp_up_s=float(data.get("ramp_up_s", 900.0)),
-            plateau_s=float(data.get("plateau_s", 1800.0)),
-            ramp_down_s=float(data.get("ramp_down_s", 900.0)),
+            base_demand_vph=float(data["base_demand_vph"]),
+            peak_demand_vph=float(data["peak_demand_vph"]),
+            ramp_up_s=float(data["ramp_up_s"]),
+            plateau_s=float(data["plateau_s"]),
+            ramp_down_s=float(data["ramp_down_s"]),
         )
 
     def total_rate_vph_at(self, t: float, warmup_s: float = 600.0) -> float:
@@ -142,10 +152,11 @@ def compute_webster_flow_ratios(
 def validate_and_print_webster_ratios(
     service_rate_per_lane: float = 0.5,
     lanes_per_approach: int = 2,
+    scenario_names: tuple[str, ...] = SCENARIO_NAMES,
 ) -> dict[str, float]:
-    """Print and assert Y < 0.95 for moderate, heavy, and peak scenarios."""
+    """Print and assert Y < 0.95 for all configured scenarios."""
     results: dict[str, float] = {}
-    for name in ("moderate", "heavy", "peak"):
+    for name in scenario_names:
         y_map, y_tot = compute_webster_flow_ratios(
             name,
             service_rate_per_lane=service_rate_per_lane,

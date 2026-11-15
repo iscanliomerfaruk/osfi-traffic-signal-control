@@ -72,7 +72,7 @@ controller:
 experiment:
   num_seeds: 30
   base_seed: 202501
-  scenarios: ["moderate", "heavy", "peak"]
+  scenarios: ["moderate", "heavy", "peak", "stress"]
   controllers: ["Mamdani", "Sugeno", "OSFI-literal", "Webster", "Actuated"]
   stage2_controllers:
     - "Mamdani"
