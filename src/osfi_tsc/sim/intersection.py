@@ -46,6 +46,63 @@ class ControllerProtocol(Protocol):
         """Return target green phase command ('E', 'S', 'W', or 'N')."""
 
 
+def compute_matched_input_sigmas(
+    sigma_q: float,
+    p_miss: float,
+    ref_lambda_10s: float = 2.0,
+    false_rate_vps: float = 0.02,
+    window_s: float = 10.0,
+    base_sigma_lambda: float = 0.5,
+) -> tuple[float, float]:
+    """Compute matched non-singleton input standard deviations (sigma_1, sigma_2)."""
+    p_m = float(np.clip(p_miss, 0.0, 1.0))
+    binom_var = float(ref_lambda_10s) * p_m * (1.0 - p_m)
+    poisson_false_var = float(false_rate_vps * window_s) if p_m > 0.0 else 0.0
+    sigma1 = float(np.sqrt(float(base_sigma_lambda) ** 2 + binom_var + poisson_false_var))
+    sigma2 = float(max(float(sigma_q), 1.0))
+    return sigma1, sigma2
+
+
+def pregenerate_sensor_noise(
+    arrival_counts: dict[str, np.ndarray],
+    seed: int,
+    horizon_steps: int,
+    queue_noise_std_m: float = 0.0,
+    arrival_p_miss: float = 0.0,
+    arrival_false_rate_vps: float = 0.02,
+    dt: float = 1.0,
+) -> tuple[dict[str, np.ndarray], dict[str, np.ndarray]]:
+    """Pre-generate common-random-number queue perturbations and noisy arrival detections."""
+    q_rng = np.random.default_rng(seed + 2_000_003)
+    a_rng = np.random.default_rng(seed + 3_000_003)
+
+    queue_noise: dict[str, np.ndarray] = {}
+    detected_arrivals: dict[str, np.ndarray] = {}
+
+    p_detect = float(np.clip(1.0 - arrival_p_miss, 0.0, 1.0))
+    false_mean_step = float(arrival_false_rate_vps * dt)
+
+    for app in APPROACHES:
+        if queue_noise_std_m > 0.0:
+            queue_noise[app] = q_rng.normal(0.0, float(queue_noise_std_m), size=horizon_steps)
+        else:
+            queue_noise[app] = np.zeros(horizon_steps, dtype=float)
+
+        true_arr = np.asarray(arrival_counts[app][:horizon_steps], dtype=np.int64)
+        if arrival_p_miss > 0.0:
+            thin_arr = a_rng.binomial(true_arr, p_detect)
+            false_arr = (
+                a_rng.poisson(false_mean_step, size=horizon_steps)
+                if false_mean_step > 0.0
+                else np.zeros(horizon_steps, dtype=np.int64)
+            )
+            detected_arrivals[app] = (thin_arr + false_arr).astype(np.int64)
+        else:
+            detected_arrivals[app] = true_arr.copy()
+
+    return queue_noise, detected_arrivals
+
+
 class Sensor:
     """Traffic sensor for approach queue lengths [m/lane] and 10-s arrival rates [veh/10s]."""
 
@@ -56,14 +113,22 @@ class Sensor:
         arrival_window_steps: int = 10,
         queue_noise_std_m: float = 0.0,
         arrival_noise_std: float = 0.0,
+        arrival_p_miss: float = 0.0,
+        arrival_false_rate_vps: float = 0.02,
         seed: int | None = None,
+        pregenerated_queue_noise: dict[str, np.ndarray] | None = None,
+        pregenerated_detected_arrivals: dict[str, np.ndarray] | None = None,
     ) -> None:
         self.lanes_per_approach = lanes_per_approach
         self.vehicle_length_m = vehicle_length_m
         self.arrival_window_steps = arrival_window_steps
-        self.queue_noise_std_m = queue_noise_std_m
-        self.arrival_noise_std = arrival_noise_std
+        self.queue_noise_std_m = float(queue_noise_std_m)
+        self.arrival_noise_std = float(arrival_noise_std)
+        self.arrival_p_miss = float(arrival_p_miss)
+        self.arrival_false_rate_vps = float(arrival_false_rate_vps)
         self._rng = np.random.default_rng(seed) if seed is not None else np.random.default_rng(0)
+        self._pregenerated_queue_noise = pregenerated_queue_noise
+        self._pregenerated_detected_arrivals = pregenerated_detected_arrivals
 
     def observe(
         self,
@@ -87,15 +152,39 @@ class Sensor:
             q_cnt = len(queues[app])
             queues_veh[app] = q_cnt
             q_m = (float(q_cnt) / float(self.lanes_per_approach)) * self.vehicle_length_m
-            if self.queue_noise_std_m > 0.0:
+            if self._pregenerated_queue_noise is not None:
+                if self.queue_noise_std_m > 0.0:
+                    q_m = max(0.0, q_m + float(self._pregenerated_queue_noise[app][step_idx]))
+            elif self.queue_noise_std_m > 0.0:
                 q_m = max(0.0, q_m + float(self._rng.normal(0.0, self.queue_noise_std_m)))
             queues_m[app] = q_m
 
-            arr_win = float(np.sum(arrival_counts[app][win_start : step_idx + 1]))
+            if self._pregenerated_detected_arrivals is not None:
+                det_stream = self._pregenerated_detected_arrivals[app]
+                arr_win = float(np.sum(det_stream[win_start : step_idx + 1]))
+                step_det = int(det_stream[step_idx])
+            else:
+                true_win = int(np.sum(arrival_counts[app][win_start : step_idx + 1]))
+                true_step = int(arrival_counts[app][step_idx])
+                if self.arrival_p_miss > 0.0:
+                    p_det = float(np.clip(1.0 - self.arrival_p_miss, 0.0, 1.0))
+                    arr_win = float(
+                        self._rng.binomial(true_win, p_det)
+                        + self._rng.poisson(self.arrival_false_rate_vps * 10.0)
+                    )
+                    step_det = int(
+                        self._rng.binomial(true_step, p_det)
+                        + self._rng.poisson(self.arrival_false_rate_vps * dt)
+                    )
+                else:
+                    arr_win = float(true_win)
+                    step_det = true_step
+
             if self.arrival_noise_std > 0.0:
                 arr_win = max(0.0, arr_win + float(self._rng.normal(0.0, self.arrival_noise_std)))
+
             arrival_rates[app] = arr_win
-            arrivals_this_step[app] = int(arrival_counts[app][step_idx])
+            arrivals_this_step[app] = step_det
 
         return SensorReading(
             t=float(step_idx) * dt,
@@ -153,6 +242,8 @@ class IntersectionSimulator:
         measurement_s: int = 3600,
         queue_noise_std_m: float = 0.0,
         arrival_noise_std: float = 0.0,
+        arrival_p_miss: float = 0.0,
+        arrival_false_rate_vps: float = 0.02,
     ) -> None:
         if service not in ("exponential", "deterministic"):
             raise ValueError(f"Unsupported service mode: {service}")
@@ -171,8 +262,10 @@ class IntersectionSimulator:
         self.warmup_s = warmup_s
         self.measurement_s = measurement_s
         self.horizon_steps = int(round((warmup_s + measurement_s) / dt))
-        self.queue_noise_std_m = queue_noise_std_m
-        self.arrival_noise_std = arrival_noise_std
+        self.queue_noise_std_m = float(queue_noise_std_m)
+        self.arrival_noise_std = float(arrival_noise_std)
+        self.arrival_p_miss = float(arrival_p_miss)
+        self.arrival_false_rate_vps = float(arrival_false_rate_vps)
 
     def run(
         self,
@@ -181,6 +274,7 @@ class IntersectionSimulator:
         seed: int,
         controller_name: str = "controller",
         arrival_counts: dict[str, np.ndarray] | None = None,
+        pregenerated_noise: tuple[dict[str, np.ndarray], dict[str, np.ndarray]] | None = None,
         verify_conservation: bool = True,
     ) -> SimulationResult:
         """Execute simulation for one scenario and seed using common random numbers."""
@@ -197,6 +291,19 @@ class IntersectionSimulator:
             )
         )
 
+        if pregenerated_noise is not None:
+            q_noise, det_arr = pregenerated_noise
+        else:
+            q_noise, det_arr = pregenerate_sensor_noise(
+                arrival_counts=arr_counts,
+                seed=seed,
+                horizon_steps=self.horizon_steps,
+                queue_noise_std_m=self.queue_noise_std_m,
+                arrival_p_miss=self.arrival_p_miss,
+                arrival_false_rate_vps=self.arrival_false_rate_vps,
+                dt=self.dt,
+            )
+
         service_rng = np.random.default_rng(seed + 1_000_003)
         sensor = Sensor(
             lanes_per_approach=self.lanes_per_approach,
@@ -204,7 +311,11 @@ class IntersectionSimulator:
             arrival_window_steps=self.arrival_window_steps,
             queue_noise_std_m=self.queue_noise_std_m,
             arrival_noise_std=self.arrival_noise_std,
+            arrival_p_miss=self.arrival_p_miss,
+            arrival_false_rate_vps=self.arrival_false_rate_vps,
             seed=seed + 2_000_003,
+            pregenerated_queue_noise=q_noise,
+            pregenerated_detected_arrivals=det_arr,
         )
 
         queues: dict[str, deque[Vehicle]] = {app: deque() for app in APPROACHES}

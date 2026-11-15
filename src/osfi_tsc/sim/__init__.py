@@ -17,6 +17,8 @@ from osfi_tsc.sim.intersection import (
     SensorReading,
     SimulationResult,
     Vehicle,
+    compute_matched_input_sigmas,
+    pregenerate_sensor_noise,
 )
 
 __all__ = [
@@ -34,4 +36,6 @@ __all__ = [
     "SensorReading",
     "SimulationResult",
     "Vehicle",
+    "compute_matched_input_sigmas",
+    "pregenerate_sensor_noise",
 ]

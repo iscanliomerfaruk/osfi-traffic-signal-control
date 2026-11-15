@@ -17,9 +17,11 @@ from osfi_tsc.sim import (
     APPROACHES,
     IntersectionSimulator,
     ScenarioDemand,
+    compute_matched_input_sigmas,
     compute_webster_flow_ratios,
     pregenerate_arrival_timestamps,
     pregenerate_arrivals,
+    pregenerate_sensor_noise,
 )
 
 
@@ -113,3 +115,26 @@ def test_no_comment_lines_in_python_source_files() -> None:
                 assert not stripped.startswith("#"), (
                     f"Comment line found in {py_file}:{lineno}: {line}"
                 )
+
+
+def test_noisy_sensor_common_random_numbers_and_bounds() -> None:
+    """Verify noisy queue and arrival sensor streams are reproducible and non-negative."""
+    scen = ScenarioDemand.from_name("heavy")
+    arr = pregenerate_arrivals(scen, seed=101, warmup_s=60, measurement_s=180)
+    q_n1, d_a1 = pregenerate_sensor_noise(
+        arr, seed=101, horizon_steps=240, queue_noise_std_m=10.0, arrival_p_miss=0.2
+    )
+    q_n2, d_a2 = pregenerate_sensor_noise(
+        arr, seed=101, horizon_steps=240, queue_noise_std_m=10.0, arrival_p_miss=0.2
+    )
+    for app in APPROACHES:
+        assert np.array_equal(q_n1[app], q_n2[app])
+        assert np.array_equal(d_a1[app], d_a2[app])
+        assert int(np.min(d_a1[app])) >= 0
+
+    s1_0, s2_0 = compute_matched_input_sigmas(sigma_q=0.0, p_miss=0.0)
+    s1_2, s2_2 = compute_matched_input_sigmas(sigma_q=10.0, p_miss=0.2)
+    assert s2_0 == 1.0
+    assert s2_2 == 10.0
+    assert s1_2 > s1_0
+

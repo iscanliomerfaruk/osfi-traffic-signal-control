@@ -1,6 +1,10 @@
 fuzzy:
   shoulder_edges: true
   mamdani_grid_step: 0.05
+  implicator: "lukasiewicz"
+  tie_break: "smallest"
+  defuzz_method: "centroid_above_floor"
+  cache_dir: "results/cache"
   arrival_rate:
     universe: [0.0, 12.0]
     sigma: 1.0
@@ -46,6 +50,10 @@ simulator:
   sensor_noise:
     queue_std_m: 0.0
     arrival_std: 0.0
+    arrival_p_miss: 0.0
+    arrival_false_rate_vps: 0.02
+    queue_std_grid_m: [0.0, 5.0, 10.0, 15.0]
+    arrival_p_miss_grid: [0.0, 0.1, 0.2]
 
 demand:
   table1_mamdani_exits:
@@ -65,3 +73,13 @@ experiment:
   base_seed: 202501
   scenarios: ["moderate", "heavy", "peak"]
   controllers: ["Mamdani", "Sugeno", "OSFI-literal", "Webster", "Actuated"]
+  stage2_controllers:
+    - "Mamdani"
+    - "Sugeno"
+    - "OSFI-literal"
+    - "OSFI-DJ-S"
+    - "CRI-NS"
+    - "OSFI-DJ-NS"
+    - "OSFI-DJ-NS-mis"
+    - "Webster"
+    - "Actuated"

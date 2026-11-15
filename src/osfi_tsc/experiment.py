@@ -11,7 +11,9 @@ from tqdm import tqdm
 
 from osfi_tsc.control import ActuatedController, FuzzyController, WebsterController
 from osfi_tsc.inference import (
+    CRIInference,
     MamdaniInference,
+    OSFIDJInference,
     OSFILiteralInference,
     SugenoInference,
 )
@@ -24,7 +26,9 @@ from osfi_tsc.sim import (
     APPROACHES,
     IntersectionSimulator,
     ScenarioDemand,
+    compute_matched_input_sigmas,
     pregenerate_arrivals,
+    pregenerate_sensor_noise,
     validate_and_print_webster_ratios,
 )
 
@@ -34,6 +38,28 @@ CONTROLLER_ORDER: tuple[str, ...] = (
     "OSFI-literal",
     "Webster",
     "Actuated",
+)
+
+STAGE2_CONTROLLER_ORDER: tuple[str, ...] = (
+    "Mamdani",
+    "Sugeno",
+    "OSFI-literal",
+    "OSFI-DJ-S",
+    "CRI-NS",
+    "OSFI-DJ-NS",
+    "OSFI-DJ-NS-mis",
+    "Webster",
+    "Actuated",
+)
+
+FUZZY_CONTROLLER_NAMES: tuple[str, ...] = (
+    "Mamdani",
+    "Sugeno",
+    "OSFI-literal",
+    "OSFI-DJ-S",
+    "CRI-NS",
+    "OSFI-DJ-NS",
+    "OSFI-DJ-NS-mis",
 )
 
 PAPER_TABLE_1: dict[str, dict[str, dict[str, float]]] = {
@@ -77,24 +103,91 @@ def build_controller(
     name: str,
     scenario: ScenarioDemand,
     config: dict[str, Any],
+    sigma_q: float | None = None,
+    p_miss: float | None = None,
+    use_lut: bool = True,
 ) -> Any:
     """Instantiate a traffic signal controller by name."""
     fuzzy_cfg = config.get("fuzzy", {})
     ctrl_cfg = config.get("controller", {})
     sim_cfg = config.get("simulator", {})
+    noise_cfg = sim_cfg.get("sensor_noise", {})
+
     shoulder = bool(fuzzy_cfg.get("shoulder_edges", True))
     grid_step = float(fuzzy_cfg.get("mamdani_grid_step", 0.05))
+    implicator = str(fuzzy_cfg.get("implicator", "lukasiewicz"))
+    tie_break = str(fuzzy_cfg.get("tie_break", "smallest"))
+    defuzz_method = str(fuzzy_cfg.get("defuzz_method", "centroid_above_floor"))
+    cache_dir = str(fuzzy_cfg.get("cache_dir", "results/cache"))
+
+    sq = float(sigma_q if sigma_q is not None else noise_cfg.get("queue_std_m", 0.0))
+    pm = float(p_miss if p_miss is not None else noise_cfg.get("arrival_p_miss", 0.0))
+
     g_min = int(ctrl_cfg.get("g_min", 7))
     g_max = int(ctrl_cfg.get("g_max", 60))
 
     if name == "Mamdani":
-        engine = MamdaniInference(shoulder_edges=shoulder, grid_step=grid_step)
+        engine: Any = MamdaniInference(shoulder_edges=shoulder, grid_step=grid_step)
         return FuzzyController(engine=engine, g_min=g_min, g_max=g_max)
     if name == "Sugeno":
         engine = SugenoInference(shoulder_edges=shoulder)
         return FuzzyController(engine=engine, g_min=g_min, g_max=g_max)
     if name == "OSFI-literal":
         engine = OSFILiteralInference(shoulder_edges=shoulder)
+        return FuzzyController(engine=engine, g_min=g_min, g_max=g_max)
+    if name == "OSFI-DJ-S":
+        engine = OSFIDJInference(
+            implicator=implicator,
+            tie_break=tie_break,
+            defuzz_method=defuzz_method,
+            shoulder_edges=shoulder,
+            sigma_lambda=0.0,
+            sigma_queue=0.0,
+            sigma_ext1=0.0,
+            use_lut=use_lut,
+            cache_dir=cache_dir,
+        )
+        return FuzzyController(engine=engine, g_min=g_min, g_max=g_max)
+    if name == "CRI-NS":
+        sig1, sig2 = compute_matched_input_sigmas(sigma_q=sq, p_miss=pm)
+        engine = CRIInference(
+            implicator=implicator,
+            defuzz_method=defuzz_method,
+            shoulder_edges=shoulder,
+            sigma_lambda=sig1,
+            sigma_queue=sig2,
+            sigma_ext1=0.0,
+            use_lut=use_lut,
+            cache_dir=cache_dir,
+        )
+        return FuzzyController(engine=engine, g_min=g_min, g_max=g_max)
+    if name == "OSFI-DJ-NS":
+        sig1, sig2 = compute_matched_input_sigmas(sigma_q=sq, p_miss=pm)
+        engine = OSFIDJInference(
+            implicator=implicator,
+            tie_break=tie_break,
+            defuzz_method=defuzz_method,
+            shoulder_edges=shoulder,
+            sigma_lambda=sig1,
+            sigma_queue=sig2,
+            sigma_ext1=0.0,
+            use_lut=use_lut,
+            cache_dir=cache_dir,
+        )
+        return FuzzyController(engine=engine, g_min=g_min, g_max=g_max)
+    if name == "OSFI-DJ-NS-mis":
+        sig1_mis, sig2_mis = compute_matched_input_sigmas(sigma_q=5.0, p_miss=0.0)
+        engine = OSFIDJInference(
+            implicator=implicator,
+            tie_break=tie_break,
+            defuzz_method=defuzz_method,
+            shoulder_edges=shoulder,
+            sigma_lambda=sig1_mis,
+            sigma_queue=sig2_mis,
+            sigma_ext1=0.0,
+            use_lut=use_lut,
+            cache_dir=cache_dir,
+        )
         return FuzzyController(engine=engine, g_min=g_min, g_max=g_max)
     if name == "Webster":
         bounds = tuple(ctrl_cfg.get("webster_cycle_bounds", [40.0, 180.0]))
