@@ -282,13 +282,8 @@ class OSFIDJStageEngine:
         zero_diff_act = i_act_b if is_mamdani else (1.0 - i_act_b)
         base_b = np.sum(zero_diff_act, axis=0)
 
-        active_mask = np.zeros(len(a_star_flat), dtype=bool)
-        active_mask[act] = True
-
-        full_zero_diff = np.zeros((len(a_star_flat), self.b_pts), dtype=float)
-        full_zero_diff[act, :] = zero_diff_act
-        full_i_b = np.zeros((len(a_star_flat), self.b_pts), dtype=float)
-        full_i_b[act, :] = i_act_b
+        idx_map = np.full(len(a_star_flat), -1, dtype=np.int32)
+        idx_map[act] = np.arange(len(act), dtype=np.int32)
 
         out = np.zeros((len(indices), len(self.y_grid)), dtype=float)
         for out_k, r_idx in enumerate(indices):
@@ -296,15 +291,16 @@ class OSFIDJStageEngine:
             u_inv = self._rule_u_inv[r_idx]
             r_pu = self._rule_r_pos_u[r_idx]
 
-            in_act = active_mask[pos]
+            local_idx = idx_map[pos]
+            in_act = local_idx >= 0
             if not np.any(in_act):
                 obj_ub = np.tile(base_b[None, :], (r_pu.shape[1], 1))
             else:
-                pos_act = pos[in_act]
+                act_rows = local_idx[in_act]
                 r_sub = r_pu[in_act, :]
-                sub_base = np.sum(full_zero_diff[pos_act, :], axis=0)
+                sub_base = np.sum(zero_diff_act[act_rows, :], axis=0)
                 active_l1 = cdist(
-                    r_sub.T, full_i_b[pos_act, :].T, metric="cityblock"
+                    r_sub.T, i_act_b[act_rows, :].T, metric="cityblock"
                 )
                 obj_ub = (base_b - sub_base)[None, :] + active_l1
 

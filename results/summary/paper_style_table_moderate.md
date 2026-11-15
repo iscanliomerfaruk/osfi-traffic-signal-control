@@ -5,11 +5,11 @@ Sign convention: positive `% Improvement` always indicates better performance by
 
 | Indicator | Phase | Mamdani | Sugeno | OSFI-literal | % Imp. vs Mamdani | % Imp. vs Sugeno | Paper Claimed Direction Reproduced? |
 | :--- | :---: | ---: | ---: | ---: | ---: | ---: | :--- |
-| Average Delay (s) | E | 216.06 | 335.94 | 339.00 | -56.90% | -0.91% | No |
-| Average Delay (s) | S | 181.57 | 289.47 | 291.93 | -60.78% | -0.85% | No |
-| Average Delay (s) | W | 419.99 | 658.65 | 667.63 | -58.96% | -1.36% | No |
-| Average Delay (s) | N | 400.48 | 628.13 | 636.51 | -58.94% | -1.33% | No |
-| Average Exit (veh) | E | 513.2 | 482.6 | 480.9 | -6.29% | -0.35% | No |
-| Average Exit (veh) | S | 627.3 | 594.2 | 594.0 | -5.31% | -0.04% | No |
-| Average Exit (veh) | W | 235.5 | 204.2 | 205.3 | -12.84% | +0.51% | Partial (vs Sugeno only) |
-| Average Exit (veh) | N | 250.1 | 219.0 | 220.2 | -11.93% | +0.58% | Partial (vs Sugeno only) |
+| Average Delay (s) | E | 17.15 | 17.26 | 20.15 | -17.52% | -16.73% | No |
+| Average Delay (s) | S | 16.26 | 17.04 | 19.82 | -21.88% | -16.32% | No |
+| Average Delay (s) | W | 30.35 | 29.87 | 33.81 | -11.40% | -13.17% | No |
+| Average Delay (s) | N | 31.55 | 32.43 | 36.72 | -16.38% | -13.23% | No |
+| Average Exit (veh) | E | 342.8 | 343.4 | 343.1 | +0.11% | -0.09% | Partial (vs Mamdani only) |
+| Average Exit (veh) | S | 415.9 | 416.2 | 415.5 | -0.08% | -0.15% | No |
+| Average Exit (veh) | W | 173.8 | 173.8 | 173.4 | -0.27% | -0.27% | No |
+| Average Exit (veh) | N | 176.0 | 175.7 | 176.0 | -0.04% | +0.15% | Partial (vs Sugeno only) |

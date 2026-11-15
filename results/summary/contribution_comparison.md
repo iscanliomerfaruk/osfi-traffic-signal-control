@@ -1,0 +1,25 @@
+# Guideline §6.2 Comparison Table — Baseline (`OSFI-DJ-S`) vs. Proposed (`OSFI-DJ-NS`)
+
+Comparison across `n = 30` common-random-number seeds (mean $\pm$ 95% $t$-CI) and `10,000`-call `time.perf_counter` inference benchmarks.
+
+| Performance Metric | Baseline (`OSFI-DJ-S`) | Proposed (`OSFI-DJ-NS`) | Change |
+| :--- | ---: | ---: | ---: |
+| Average Delay [s/veh] — Heavy (1500 veh/h), σ_q=0 m, p_miss=0.0 | 24.07 ± 0.35 | 23.67 ± 0.34 | -0.40 s/veh (-1.65%) |
+| Average Delay [s/veh] — Heavy (1500 veh/h), σ_q=10 m, p_miss=0.0 | 33.57 ± 0.52 | 33.44 ± 0.59 | -0.13 s/veh (-0.40%) |
+| Average Delay [s/veh] — Heavy (1500 veh/h), σ_q=15 m, p_miss=0.0 | 36.18 ± 0.54 | 36.18 ± 0.53 | -0.00 s/veh (-0.00%) |
+| Average Delay [s/veh] — Heavy (1500 veh/h), σ_q=0 m, p_miss=0.1 | 23.90 ± 0.35 | 23.85 ± 0.36 | -0.05 s/veh (-0.19%) |
+| Average Delay [s/veh] — Heavy (1500 veh/h), σ_q=10 m, p_miss=0.1 | 33.82 ± 0.47 | 32.80 ± 0.48 | -1.02 s/veh (-3.02%) |
+| Average Delay [s/veh] — Heavy (1500 veh/h), σ_q=15 m, p_miss=0.1 | 36.59 ± 0.56 | 36.18 ± 0.48 | -0.41 s/veh (-1.12%) |
+| Throughput [veh/h] — Heavy (1500 veh/h), σ_q=10 m, p_miss=0.0 | 1501.7 ± 16.4 | 1500.6 ± 16.4 | -1.1 veh (-0.07%) |
+| Mean Queue Length [m/lane] — Heavy (1500 veh/h), σ_q=10 m, p_miss=0.0 | 12.33 ± 0.27 | 12.29 ± 0.29 | -0.04 m/lane (-0.30%) |
+| Average Delay [s/veh] — Peak (1100→1800→1100 veh/h), σ_q=0 m, p_miss=0.0 | 26.26 ± 0.42 | 25.98 ± 0.42 | -0.28 s/veh (-1.05%) |
+| Average Delay [s/veh] — Peak (1100→1800→1100 veh/h), σ_q=10 m, p_miss=0.0 | 35.77 ± 0.53 | 35.20 ± 0.65 | -0.57 s/veh (-1.59%) |
+| Average Delay [s/veh] — Peak (1100→1800→1100 veh/h), σ_q=15 m, p_miss=0.0 | 38.36 ± 0.60 | 38.57 ± 0.58 | +0.21 s/veh (+0.55%) |
+| Average Delay [s/veh] — Peak (1100→1800→1100 veh/h), σ_q=0 m, p_miss=0.1 | 26.21 ± 0.43 | 26.03 ± 0.44 | -0.18 s/veh (-0.70%) |
+| Average Delay [s/veh] — Peak (1100→1800→1100 veh/h), σ_q=10 m, p_miss=0.1 | 36.01 ± 0.51 | 35.34 ± 0.66 | -0.67 s/veh (-1.87%) |
+| Average Delay [s/veh] — Peak (1100→1800→1100 veh/h), σ_q=15 m, p_miss=0.1 | 38.63 ± 0.54 | 38.39 ± 0.61 | -0.24 s/veh (-0.63%) |
+| Throughput [veh/h] — Peak (1100→1800→1100 veh/h), σ_q=10 m, p_miss=0.0 | 1627.6 ± 15.5 | 1627.1 ± 15.8 | -0.5 veh (-0.03%) |
+| Mean Queue Length [m/lane] — Peak (1100→1800→1100 veh/h), σ_q=10 m, p_miss=0.0 | 14.20 ± 0.30 | 13.97 ± 0.35 | -0.23 m/lane (-1.63%) |
+| Execution Time per Inference (Direct, 10k calls) [ms/call] | 1.296 ms | 7.614 ms | +6.318 ms (+487.4%) |
+| Execution Time per Inference (2D LUT Lookup, 10k calls) [µs/call] | 21.06 µs (0.02106 ms) | 21.16 µs (0.02116 ms) | +0.10 µs (+0.5%) |
+| Offline LUT Precomputation Build Time (FC1 + FC2) [s] | 0.92 s | 3.92 s | +2.99 s (+323.7%) |
