@@ -25,7 +25,7 @@ wheels/
 .ruff_cache/
 results/cache/
 *.pdf
-!figures/*.pdf
+!results/figures/*.pdf
 prompts/
 ../prompts/
 .DS_Store

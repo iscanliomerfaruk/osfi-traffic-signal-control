@@ -1,4 +1,4 @@
-"""Publication-grade figure generation for Stage 1 reproduction and Stage 2 contribution."""
+"""Publication-grade figure generation for the reproduction, contribution, and Stage 3 diagnostics."""
 
 from __future__ import annotations
 
@@ -272,37 +272,46 @@ def plot_control_surfaces(out_dir: Path, shoulder_edges: bool = True) -> list[Pa
     return saved
 
 
+PHASE_PLOT_CONTROLLERS: tuple[str, ...] = ("Mamdani", "Sugeno", "OSFI-literal", "Webster", "Actuated")
+PHASE_PLOT_SCENARIOS: tuple[str, ...] = ("moderate", "heavy", "peak")
+BOXPLOT_SCENARIOS: tuple[str, ...] = ("moderate", "heavy", "peak", "stress")
+LOG_SCALE_SCENARIOS: tuple[str, ...] = ("peak", "stress")
+
+
+def _available_scenarios(df: pd.DataFrame, wanted: tuple[str, ...]) -> list[str]:
+    present = set(df["scenario"].unique())
+    return [scen for scen in wanted if scen in present]
+
+
 def plot_phase_delays(summary_df: pd.DataFrame, out_dir: Path) -> list[Path]:
-    """Render per-phase mean delay with 95% CI error bars using grouped markers."""
+    """Render per-phase mean delay with 95% CI error bars for all reproduction controllers."""
     apply_academic_style()
     saved: list[Path] = []
-    fuzzy_ctrls = ("Mamdani", "Sugeno", "OSFI-literal")
-    offsets = (-0.18, 0.0, 0.18)
+    ctrls = [c for c in PHASE_PLOT_CONTROLLERS if c in set(summary_df["controller"])]
+    offsets = np.linspace(-0.3, 0.3, len(ctrls))
     x_base = np.arange(len(APPROACHES), dtype=float)
 
-    for scen in ("moderate", "heavy"):
+    for scen in _available_scenarios(summary_df, PHASE_PLOT_SCENARIOS):
         sub = summary_df[
             (summary_df["scenario"] == scen)
             & (summary_df["approach"].isin(APPROACHES))
         ]
-        fig, ax = plt.subplots(figsize=(3.6, 2.7), constrained_layout=True)
-        for ctrl, offset in zip(fuzzy_ctrls, offsets):
+        fig, ax = plt.subplots(figsize=(4.4, 3.0), constrained_layout=True)
+        for ctrl, offset in zip(ctrls, offsets):
             c_sub = (
                 sub[sub["controller"] == ctrl]
                 .set_index("approach")
                 .reindex(APPROACHES)
             )
-            means = c_sub["avg_delay_s_mean"].to_numpy(dtype=float)
-            cis = c_sub["avg_delay_s_ci95"].to_numpy(dtype=float)
             ax.errorbar(
                 x_base + offset,
-                means,
-                yerr=cis,
+                c_sub["avg_delay_s_mean"].to_numpy(dtype=float),
+                yerr=c_sub["avg_delay_s_ci95"].to_numpy(dtype=float),
                 fmt=CONTROLLER_MARKERS[ctrl],
                 color=CONTROLLER_COLORS[ctrl],
-                markersize=6.0,
-                capsize=3.5,
-                elinewidth=1.3,
+                markersize=5.5,
+                capsize=3.0,
+                elinewidth=1.2,
                 label=ctrl,
                 linestyle="none",
             )
@@ -310,7 +319,11 @@ def plot_phase_delays(summary_df: pd.DataFrame, out_dir: Path) -> list[Path]:
         ax.set_xticklabels(list(APPROACHES))
         ax.set_xlabel("Signal phase (approach)")
         ax.set_ylabel("Average vehicle delay [s / veh]")
-        ax.legend(loc="upper left", frameon=True)
+        if scen in LOG_SCALE_SCENARIOS:
+            ax.set_yscale("log")
+            ax.set_ylabel("Average vehicle delay [s / veh, log]")
+        ax.set_title(f"Scenario: {scen}", fontsize=9.5)
+        fig.legend(loc="outside lower center", ncol=3, frameon=False)
         saved.extend(_save_both(fig, out_dir, f"phase_delay_{scen}"))
 
     return saved
@@ -320,89 +333,90 @@ def plot_phase_exits(summary_df: pd.DataFrame, out_dir: Path) -> list[Path]:
     """Render grouped bar charts of per-phase throughput with 95% CI error bars."""
     apply_academic_style()
     saved: list[Path] = []
-    fuzzy_ctrls = ("Mamdani", "Sugeno", "OSFI-literal")
-    width = 0.25
-    offsets = (-width, 0.0, width)
+    ctrls = [c for c in PHASE_PLOT_CONTROLLERS if c in set(summary_df["controller"])]
+    width = 0.8 / len(ctrls)
+    offsets = (np.arange(len(ctrls)) - 0.5 * (len(ctrls) - 1)) * width
     x_base = np.arange(len(APPROACHES), dtype=float)
 
-    for scen in ("moderate", "heavy"):
+    for scen in _available_scenarios(summary_df, PHASE_PLOT_SCENARIOS):
         sub = summary_df[
             (summary_df["scenario"] == scen)
             & (summary_df["approach"].isin(APPROACHES))
         ]
-        fig, ax = plt.subplots(figsize=(3.6, 2.7), constrained_layout=True)
-        for ctrl, offset in zip(fuzzy_ctrls, offsets):
+        fig, ax = plt.subplots(figsize=(4.4, 3.0), constrained_layout=True)
+        for ctrl, offset in zip(ctrls, offsets):
             c_sub = (
                 sub[sub["controller"] == ctrl]
                 .set_index("approach")
                 .reindex(APPROACHES)
             )
-            means = c_sub["throughput_veh_mean"].to_numpy(dtype=float)
-            cis = c_sub["throughput_veh_ci95"].to_numpy(dtype=float)
             ax.bar(
                 x_base + offset,
-                means,
-                width=width * 0.9,
-                yerr=cis,
-                capsize=2.8,
+                c_sub["throughput_veh_mean"].to_numpy(dtype=float),
+                width=width * 0.92,
+                yerr=c_sub["throughput_veh_ci95"].to_numpy(dtype=float),
+                capsize=2.0,
                 color=CONTROLLER_COLORS[ctrl],
                 edgecolor="black",
-                linewidth=0.5,
+                linewidth=0.4,
                 alpha=0.88,
                 label=ctrl,
-                error_kw={"elinewidth": 1.0},
+                error_kw={"elinewidth": 0.9},
             )
         ax.set_xticks(x_base)
         ax.set_xticklabels(list(APPROACHES))
         ax.set_xlabel("Signal phase (approach)")
         ax.set_ylabel("Discharged vehicles [veh / h]")
-        ax.set_ylim(0.0, float(sub["throughput_veh_mean"].max()) * 1.24)
-        ax.legend(loc="upper right", frameon=True)
+        ax.set_ylim(0.0, float(sub["throughput_veh_mean"].max()) * 1.12)
+        ax.set_title(f"Scenario: {scen}", fontsize=9.5)
+        fig.legend(loc="outside lower center", ncol=3, frameon=False)
         saved.extend(_save_both(fig, out_dir, f"phase_exit_{scen}"))
 
     return saved
 
 
 def plot_overall_delay_boxplot(raw_df: pd.DataFrame, out_dir: Path) -> list[Path]:
-    """Render per-seed overall delay distributions across 5 controllers x 3 scenarios."""
+    """Render per-seed overall delay distributions for 5 controllers in all 4 scenarios."""
     apply_academic_style()
     overall = raw_df[raw_df["approach"] == "overall"].copy()
-    scenarios = ("moderate", "heavy", "peak")
-    controllers = ("Mamdani", "Sugeno", "OSFI-literal", "Webster", "Actuated")
+    scenarios = _available_scenarios(overall, BOXPLOT_SCENARIOS)
+    controllers = [c for c in PHASE_PLOT_CONTROLLERS if c in set(overall["controller"])]
+    short = {"OSFI-literal": "OSFI-lit."}
 
-    fig, axes = plt.subplots(1, 3, figsize=(7.2, 2.85), sharey=False, constrained_layout=True)
+    n_cols = 2
+    n_rows = int(np.ceil(len(scenarios) / n_cols))
+    fig, axes = plt.subplots(n_rows, n_cols, figsize=(7.2, 2.7 * n_rows), constrained_layout=True)
+    flat_axes = np.atleast_1d(axes).ravel()
 
     for idx, scen in enumerate(scenarios):
-        ax = axes[idx]
+        ax = flat_axes[idx]
         s_df = overall[overall["scenario"] == scen]
-        data = [
-            s_df[s_df["controller"] == c]["avg_delay_s"].to_numpy(dtype=float)
-            for c in controllers
-        ]
+        data = [s_df[s_df["controller"] == c]["avg_delay_s"].to_numpy(dtype=float) for c in controllers]
         bp = ax.boxplot(
             data,
             positions=np.arange(len(controllers)),
             widths=0.55,
             patch_artist=True,
             showfliers=True,
-            flierprops={"marker": "o", "markersize": 3.0, "alpha": 0.6},
-            medianprops={"color": "black", "linewidth": 1.3},
+            flierprops={"marker": "o", "markersize": 2.5, "alpha": 0.6},
+            medianprops={"color": "black", "linewidth": 1.2},
         )
         for patch, ctrl in zip(bp["boxes"], controllers):
             patch.set_facecolor(CONTROLLER_COLORS[ctrl])
             patch.set_alpha(0.82)
             patch.set_edgecolor("black")
             patch.set_linewidth(0.7)
-
         ax.set_xticks(np.arange(len(controllers)))
-        ax.set_xticklabels(
-            ["Mamdani", "Sugeno", "OSFI-lit.", "Webster", "Actuated"],
-            rotation=28,
-            ha="right",
-        )
-        ax.set_xlabel(f"Scenario: {scen}")
-        if idx == 0:
-            ax.set_ylabel("Overall average delay [s / veh]")
+        ax.set_xticklabels([short.get(c, c) for c in controllers], rotation=20, ha="right")
+        scale_tag = ""
+        if scen in LOG_SCALE_SCENARIOS:
+            ax.set_yscale("log")
+            scale_tag = " (log scale)"
+        ax.set_title(f"Scenario: {scen}{scale_tag}", fontsize=9.5)
+        if idx % n_cols == 0:
+            ax.set_ylabel("Overall delay [s / veh]")
+    for ax in flat_axes[len(scenarios):]:
+        ax.set_visible(False)
 
     return _save_both(fig, out_dir, "overall_delay_boxplot")
 
@@ -586,37 +600,42 @@ def plot_osfi_inference_example(out_dir: Path) -> list[Path]:
 
     ax_b = axes[0, 1]
     y_g = detail_ns["y_grid"]
+    b_grid = detail_ns["b_grid"]
     r_table = detail_ns["r_table"]
-    r_star = detail_ns["r_star"]
     act = np.flatnonzero(a_star_ns > 1e-3)
-    order = np.argsort(a_star_ns[act])[::-1]
-    top_act = act[order[:60]]
-
-    r_sub = r_table[top_act, :]
-    r_star_sub = r_star[top_act, :]
-    sep = np.full((3, len(y_g)), np.nan)
-    combined_r = np.vstack([r_sub, sep, r_star_sub])
-
-    im_b = ax_b.imshow(
-        combined_r,
-        aspect="auto",
-        origin="upper",
-        extent=[float(y_g[0]), float(y_g[-1]), float(combined_r.shape[0]), 0.0],
-        cmap="viridis",
-        vmin=0.0,
-        vmax=1.0,
-    )
-    cbar_b = fig.colorbar(im_b, ax=ax_b, pad=0.02)
-    cbar_b.set_label(r"Truth value $I(\cdot, \cdot)$")
-    ax_b.axhline(61.5, color="white", lw=1.6)
-    ax_b.set_yticks([30.0, 93.0])
-    ax_b.set_yticklabels([r"Rule $R(x,y)$", r"Induced $R^*(x,y)$"])
-    sim_act = detail_ns["similarity_active"]
-    sim_full = detail_ns["similarity_full"]
-    ax_b.set_xlabel(
-        f"(b) Output $y$ [s] ($d_1$ Sim: active={sim_act:.3f}, full={sim_full:.3f})"
-    )
-    ax_b.grid(False)
+    a_act = a_star_ns[act]
+    i_act_b = np.asarray(osfi_ns.implicator_fn(a_act[:, None], b_grid[None, :]), dtype=float)
+    y_probe = (2.0, 7.5, 15.0)
+    probe_colors = ("#0072B2", "#D55E00", "#009E73")
+    offsets = ((-10, -14), (-44, 8), (-10, 7))
+    for y_val, col, xytext in zip(y_probe, probe_colors, offsets):
+        k = int(np.argmin(np.abs(y_g - y_val)))
+        cost = np.mean(np.abs(r_table[act, k][:, None] - i_act_b), axis=0)
+        b_opt = float(detail_ns["b_star"][k])
+        j_opt = int(np.argmin(np.abs(b_grid - b_opt)))
+        ax_b.plot(b_grid, cost, color=col, lw=1.6, label=f"$y={y_g[k]:.1f}$ s")
+        ax_b.scatter(
+            [b_grid[j_opt]],
+            [cost[j_opt]],
+            color=col,
+            edgecolor="black",
+            s=42,
+            zorder=5,
+        )
+        ax_b.annotate(
+            f"$b^*={b_opt:.2f}$",
+            xy=(b_grid[j_opt], cost[j_opt]),
+            xytext=xytext,
+            textcoords="offset points",
+            fontsize=7.5,
+            color=col,
+            bbox={"boxstyle": "square,pad=0.08", "fc": "white", "ec": "none", "alpha": 0.75},
+        )
+    ax_b.set_xlabel(r"(b) Candidate conclusion value $b = B^*(y)$")
+    ax_b.set_ylabel(r"$d_1$ cost $\frac{1}{|X^*|}\sum_x |R(x,y) - I(A^*(x), b)|$")
+    ax_b.set_xlim(0.0, 1.0)
+    ax_b.set_ylim(-0.015, 0.21)
+    ax_b.legend(loc="upper right", frameon=True, title="Rule 13, OSFI-DJ-NS", title_fontsize=7.5)
 
     ax_c = axes[1, 0]
     b_rule = detail_ns["b_rule"]
@@ -713,8 +732,16 @@ def plot_osfi_inference_example(out_dir: Path) -> list[Path]:
     ax_d.set_xlabel("(d) Output universe $y$ [s] (16-rule FITA aggregation)")
     ax_d.set_ylabel(r"Above-floor $B^*(y) - \min B^*$")
     ax_d.set_xlim(0.0, 25.0)
-    ax_d.set_ylim(0.0, max(float(np.max(eff_s)), float(np.max(eff_ns)), 0.25) * 1.25)
-    ax_d.legend(loc="upper right", frameon=True, fontsize=7.8)
+    ax_d.set_ylim(0.0, max(float(np.max(eff_s)), float(np.max(eff_ns)), 0.25) * 1.1)
+    ax_d.legend(
+        loc="upper center",
+        bbox_to_anchor=(0.5, -0.24),
+        ncol=3,
+        frameon=False,
+        fontsize=7.5,
+        handlelength=1.8,
+        columnspacing=0.9,
+    )
 
     return _save_both(fig, out_dir, "osfi_inference_example")
 
@@ -797,81 +824,164 @@ def plot_control_surfaces_osfi(out_dir: Path, cache_dir: str | Path = "results/c
     return _save_both(fig, out_dir, "control_surfaces_osfi")
 
 
+NOISE_PLOT_CONTROLLERS: tuple[str, ...] = (
+    "OSFI-DJ-NS",
+    "OSFI-DJ-S",
+    "CRI-NS",
+    "OSFI-DJ-NS-mis",
+    "Mamdani",
+    "Sugeno",
+    "OSFI-literal",
+    "Actuated",
+    "Webster",
+)
+NOISE_P_MISS: tuple[float, ...] = (0.0, 0.1, 0.2)
+NOISE_SCENARIOS: tuple[str, ...] = ("heavy", "peak")
+
+
+def _noise_panel_series(
+    scen_df: pd.DataFrame,
+    p_miss: float,
+    ctrl: str,
+    relative: bool,
+) -> tuple[np.ndarray, np.ndarray, np.ndarray] | None:
+    c_df = scen_df[
+        np.isclose(scen_df["p_miss"], p_miss) & (scen_df["controller"] == ctrl)
+    ].sort_values("sigma_q")
+    if c_df.empty:
+        return None
+    sig_q = c_df["sigma_q"].to_numpy(dtype=float)
+    means = c_df["avg_delay_s_mean"].to_numpy(dtype=float)
+    cis = c_df["avg_delay_s_ci95"].to_numpy(dtype=float)
+    if not relative:
+        return sig_q, means, cis
+    ref = float(means[int(np.argmin(sig_q))])
+    return sig_q, 100.0 * (means / ref - 1.0), 100.0 * cis / ref
+
+
+def _render_noise_figure(
+    scen_df: pd.DataFrame,
+    scen: str,
+    relative: bool,
+) -> plt.Figure:
+    fig, axes = plt.subplots(1, len(NOISE_P_MISS), figsize=(7.5, 3.4), sharey=True, constrained_layout=True)
+    for p_idx, p_miss in enumerate(NOISE_P_MISS):
+        ax = axes[p_idx]
+        for ctrl in NOISE_PLOT_CONTROLLERS:
+            series = _noise_panel_series(scen_df, p_miss, ctrl, relative)
+            if series is None:
+                continue
+            sig_q, vals, errs = series
+            ax.errorbar(
+                sig_q,
+                vals,
+                yerr=errs,
+                color=CONTROLLER_COLORS[ctrl],
+                marker=CONTROLLER_MARKERS[ctrl],
+                linestyle=CONTROLLER_LINESTYLES[ctrl],
+                lw=1.4,
+                markersize=4.5,
+                capsize=2.3,
+                elinewidth=0.9,
+                label=ctrl if p_idx == 0 else None,
+            )
+        ax.set_xticks([0.0, 5.0, 10.0, 15.0])
+        ax.set_title(f"$p_{{\\mathrm{{miss}}}}={p_miss:.1f}$", fontsize=9.5)
+        ax.set_xlabel(r"Queue noise $\sigma_q$ [m / lane]")
+        if relative:
+            ax.axhline(0.0, color="black", lw=0.7)
+        elif scen == "peak":
+            ax.set_yscale("log")
+    if relative:
+        axes[0].set_ylabel(f"Delay change vs. own $\\sigma_q=0$ [%] ({scen})")
+    else:
+        log_tag = ", log" if scen == "peak" else ""
+        axes[0].set_ylabel(f"Overall delay [s / veh{log_tag}] ({scen})")
+    handles, labels = axes[0].get_legend_handles_labels()
+    fig.legend(
+        handles,
+        labels,
+        loc="outside lower center",
+        ncol=5,
+        frameon=False,
+        fontsize=8.0,
+        columnspacing=1.0,
+        handlelength=2.0,
+    )
+    return fig
+
+
 def plot_noise_degradation(exp_b_sum_df: pd.DataFrame, out_dir: Path) -> list[Path]:
-    """Render delay vs sigma_q across p_miss panels for heavy and peak scenarios."""
+    """Render absolute delay vs sigma_q across p_miss panels (shared y) for heavy and peak."""
     apply_academic_style()
     saved: list[Path] = []
-    overall = exp_b_sum_df[exp_b_sum_df["approach"] == "overall"].copy()
-    p_miss_vals = (0.0, 0.1, 0.2)
-    controllers = (
-        "OSFI-DJ-NS",
-        "OSFI-DJ-S",
-        "CRI-NS",
-        "OSFI-DJ-NS-mis",
-        "Mamdani",
-        "Sugeno",
-        "OSFI-literal",
-        "Actuated",
-        "Webster",
-    )
-
-    for scen in ("heavy", "peak"):
-        fig, axes = plt.subplots(
-            1,
-            3,
-            figsize=(7.5, 3.15),
-            sharey=True,
-            constrained_layout=True,
-        )
-        scen_df = overall[overall["scenario"] == scen]
-
-        for p_idx, p_miss in enumerate(p_miss_vals):
-            ax = axes[p_idx]
-            p_df = scen_df[np.isclose(scen_df["p_miss"], p_miss)]
-
-            for ctrl in controllers:
-                c_df = p_df[p_df["controller"] == ctrl].sort_values("sigma_q")
-                if c_df.empty:
-                    continue
-                sig_q = c_df["sigma_q"].to_numpy(dtype=float)
-                means = c_df["avg_delay_s_mean"].to_numpy(dtype=float)
-                cis = c_df["avg_delay_s_ci95"].to_numpy(dtype=float)
-
-                ax.errorbar(
-                    sig_q,
-                    means,
-                    yerr=cis,
-                    color=CONTROLLER_COLORS[ctrl],
-                    marker=CONTROLLER_MARKERS[ctrl],
-                    linestyle=CONTROLLER_LINESTYLES[ctrl],
-                    lw=1.45,
-                    markersize=4.8,
-                    capsize=2.5,
-                    elinewidth=0.9,
-                    label=ctrl if p_idx == 0 else None,
-                )
-
-            ax.set_xticks([0.0, 5.0, 10.0, 15.0])
-            ax.set_xlabel(
-                f"$\\sigma_q$ [m/lane] ($p_{{\\mathrm{{miss}}}}={p_miss:.1f}$)"
-            )
-            if p_idx == 0:
-                ax.set_ylabel(f"Overall delay [s / veh] ({scen})")
-
-        handles, labels = axes[0].get_legend_handles_labels()
-        fig.legend(
-            handles,
-            labels,
-            loc="outside upper center",
-            ncol=5,
-            frameon=True,
-            fontsize=8.0,
-            columnspacing=0.9,
-            handlelength=1.8,
-        )
+    overall = exp_b_sum_df[exp_b_sum_df["approach"] == "overall"]
+    for scen in NOISE_SCENARIOS:
+        fig = _render_noise_figure(overall[overall["scenario"] == scen], scen, relative=False)
         saved.extend(_save_both(fig, out_dir, f"noise_degradation_{scen}"))
-
     return saved
+
+
+def plot_noise_degradation_relative(exp_b_sum_df: pd.DataFrame, out_dir: Path) -> list[Path]:
+    """Render delay change relative to each controller's own sigma_q = 0 value, in percent."""
+    apply_academic_style()
+    saved: list[Path] = []
+    overall = exp_b_sum_df[exp_b_sum_df["approach"] == "overall"]
+    for scen in NOISE_SCENARIOS:
+        fig = _render_noise_figure(overall[overall["scenario"] == scen], scen, relative=True)
+        saved.extend(_save_both(fig, out_dir, f"noise_degradation_rel_{scen}"))
+    return saved
+
+
+def compute_max_firing_map(
+    lam_grid: np.ndarray,
+    q_grid: np.ndarray,
+    and_operator: str,
+    sigma_scale: float,
+) -> np.ndarray:
+    """Return max_i alpha_i of the 16 FC1 rules over a (q, lambda) grid."""
+    lam_mfs = arrival_rate_memberships(lam_grid, shoulder_edges=True, sigma_scale=sigma_scale)
+    q_mfs = queue_length_memberships(q_grid, shoulder_edges=True, sigma_scale=sigma_scale)
+    best = np.zeros((len(q_grid), len(lam_grid)), dtype=float)
+    for mu_lam in lam_mfs.values():
+        for mu_q in q_mfs.values():
+            a = np.asarray(mu_lam, dtype=float)[None, :]
+            b = np.asarray(mu_q, dtype=float)[:, None]
+            if and_operator == "min":
+                alpha = np.minimum(a, b)
+            else:
+                alpha = np.maximum(0.0, a + b - 1.0)
+            best = np.maximum(best, alpha)
+    return best
+
+
+def plot_dead_zone_map(out_dir: Path) -> list[Path]:
+    """Render max_i alpha_i over (lambda, q) for Lukasiewicz, min, and widened-Lukasiewicz AND."""
+    apply_academic_style()
+    lam_grid = np.linspace(0.0, 12.0, 481)
+    q_grid = np.linspace(0.0, 60.0, 481)
+    variants = (
+        ("(a) Łukasiewicz AND, $\\sigma\\times1.0$", "lukasiewicz", 1.0),
+        ("(b) min AND, $\\sigma\\times1.0$", "min", 1.0),
+        ("(c) Łukasiewicz AND, $\\sigma\\times1.5$", "lukasiewicz", 1.5),
+    )
+    fig, axes = plt.subplots(1, 3, figsize=(7.5, 2.9), sharey=True, constrained_layout=True)
+    last_im = None
+    for ax, (title, and_op, scale) in zip(axes, variants):
+        fmap = compute_max_firing_map(lam_grid, q_grid, and_op, scale)
+        dead_frac = 100.0 * float(np.mean(fmap < 1e-6))
+        last_im = ax.pcolormesh(lam_grid, q_grid, fmap, cmap="magma", vmin=0.0, vmax=1.0, shading="auto")
+        if np.any(fmap < 1e-6):
+            ax.contourf(lam_grid, q_grid, fmap, levels=[-1.0, 1e-6], colors="none", hatches=["////"])
+            ax.contour(lam_grid, q_grid, fmap, levels=[1e-6], colors="#00E5FF", linewidths=1.3)
+        ax.set_title(f"{title}\ndead zone = {dead_frac:.1f}% of plane", fontsize=8.5)
+        ax.set_xlabel(r"Arrival rate $\lambda$ [veh / 10 s]")
+        ax.grid(False)
+    axes[0].set_ylabel(r"Queue length $q$ [m / lane]")
+    if last_im is not None:
+        cbar = fig.colorbar(last_im, ax=axes.tolist(), pad=0.02, shrink=0.95)
+        cbar.set_label(r"$\max_i \alpha_i(\lambda, q)$ (FC1)")
+    return _save_both(fig, out_dir, "dead_zone_map")
 
 
 def plot_noise_heatmap(exp_b_sum_df: pd.DataFrame, out_dir: Path) -> list[Path]:
@@ -961,12 +1071,15 @@ def plot_ablation_bars(exp_c_sum_df: pd.DataFrame, out_dir: Path) -> list[Path]:
     df = exp_c_sum_df.copy()
 
     short_labels = {
-        "baseline_luk_smallest_abovefloor_shoulder": "Baseline (Łukasiewicz, smallest,\nabove-floor, shoulders=True)",
+        "baseline_luk_smallest_abovefloor_shoulder": "Baseline OSFI-DJ-NS (Łukasiewicz,\nsmallest, above-floor, gpe_first)",
         "implicator_goguen": "Implicator: Goguen",
         "implicator_kleene_dienes": "Implicator: Kleene-Dienes",
-        "tie_break_midpoint": "Tie-break: Midpoint",
-        "defuzz_standard_centroid": "Defuzzifier: Standard centroid\n(includes 1-α floor)",
-        "shoulder_edges_false": "Boundary MFs: Pure Gaussian\n(shoulder_edges=False)",
+        "tie_break_midpoint": "Tie-break: midpoint",
+        "defuzz_standard_centroid": "Defuzzifier: standard centroid\n(includes 1-α floor)",
+        "shoulder_edges_false": "Boundary MFs: pure Gaussian\n(shoulder_edges=False)",
+        "and_operator_min": "Antecedent AND: min\n(no dead zones)",
+        "mf_sigma_scale_1_5": "MF width: σ × 1.5",
+        "spm_mode_preempt": "SPM: preempt\n(Stage 2 thrashing logic)",
     }
     bar_colors = [
         "#117733",
@@ -975,6 +1088,9 @@ def plot_ablation_bars(exp_c_sum_df: pd.DataFrame, out_dir: Path) -> list[Path]:
         "#E69F00",
         "#0072B2",
         "#CC79A7",
+        "#882255",
+        "#44AA99",
+        "#7F7F7F",
     ]
 
     y_pos = np.arange(len(df), dtype=float)
@@ -986,7 +1102,7 @@ def plot_ablation_bars(exp_c_sum_df: pd.DataFrame, out_dir: Path) -> list[Path]:
         for vid, lbl in zip(df["variant_id"], df["label"])
     ]
 
-    fig, ax = plt.subplots(figsize=(7.2, 3.2), constrained_layout=True)
+    fig, ax = plt.subplots(figsize=(7.2, 4.4), constrained_layout=True)
     bars = ax.barh(
         y_pos,
         means,
@@ -1006,18 +1122,19 @@ def plot_ablation_bars(exp_c_sum_df: pd.DataFrame, out_dir: Path) -> list[Path]:
     for idx, (bar, mean_v, ci_v, fb_v) in enumerate(zip(bars, means, cis, fb_rates)):
         fb_str = f", fb={fb_v:.1f}%" if fb_v > 0.01 else ", fb=0%"
         ax.text(
-            mean_v + ci_v + 4.0,
+            mean_v + ci_v + 0.8,
             bar.get_y() + bar.get_height() / 2.0,
             f"{mean_v:.1f} ± {ci_v:.1f} s{fb_str}",
             va="center",
             ha="left",
             fontsize=8.0,
+            bbox={"boxstyle": "square,pad=0.1", "fc": "white", "ec": "none", "alpha": 0.78},
         )
 
     ax.set_yticks(y_pos)
     ax.set_yticklabels(labels)
     ax.invert_yaxis()
-    ax.set_xlim(700.0, 935.0)
+    ax.set_xlim(0.0, max(75.0, float(np.max(means + cis)) * 1.35))
     ax.set_xlabel(r"Overall average vehicle delay [s / veh] (heavy, $\sigma_q=10$ m, $p_{\mathrm{miss}}=0$)")
 
     return _save_both(fig, out_dir, "ablation_bars")
@@ -1045,10 +1162,12 @@ def generate_all_figures(
     exp_b_path = res_path / "tables" / "contribution_exp_b_summary.csv"
     exp_c_path = res_path / "tables" / "contribution_exp_c_summary.csv"
     generated.extend(plot_osfi_inference_example(fig_path))
+    generated.extend(plot_dead_zone_map(fig_path))
     generated.extend(plot_control_surfaces_osfi(fig_path, cache_dir=res_path / "cache"))
     if exp_b_path.exists():
         exp_b_df = pd.read_csv(exp_b_path)
         generated.extend(plot_noise_degradation(exp_b_df, fig_path))
+        generated.extend(plot_noise_degradation_relative(exp_b_df, fig_path))
         generated.extend(plot_noise_heatmap(exp_b_df, fig_path))
     if exp_c_path.exists():
         exp_c_df = pd.read_csv(exp_c_path)
