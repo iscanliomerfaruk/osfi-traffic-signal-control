@@ -26,6 +26,9 @@ wheels/
 results/cache/
 *.pdf
 !results/figures/*.pdf
+!report/*.pdf
+!report/fig/*.pdf
+!presentation/*.pdf
 prompts/
 ../prompts/
 .DS_Store
