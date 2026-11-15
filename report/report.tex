@@ -47,17 +47,15 @@
 
 \title{\textbf{İzole Kavşakta Trafik Sinyali Kontrolü için Benzerlik Optimizasyonlu Bulanık Çıkarım (OSFI): Yeniden Gerçekleştirme ve Sensör Gürültüsüne Dayanıklı Non-Singleton Genişletme}}
 \author{Ömer Faruk İşcanlı\\[0.2em]
-\small Bilgisayar Mühendisliği, İstanbul Üniversitesi-Cerrahpaşa\\
-\small Öğrenci No: 1306220071\\[0.2em]
-\small Bulanık Mantık Dersi Dönem Projesi --- Prof. Dr. Rüya Şamlı\\
+\small Öğrenci No: 1306220071\\
 \small Kod deposu: \url{https://github.com/iscanliomerfaruk/osfi-traffic-signal-control}}
-\date{16 Kasım 2026}
+\date{}
 
 \begin{document}
 \maketitle
 
 \begin{abstract}
-\noindent Bu çalışmada Esmaeili vd.~\cite{esmaeili2025osfi} tarafından önerilen, izole bir kavşakta yeşil süre uzatmasını iki aşamalı bir bulanık kontrolcüyle belirleyen \emph{Optimization Similarity Fuzzy Inference} (OSFI) yöntemi incelenmiş, açık kaynaklı bir Python simülatörü üzerinde yeniden gerçekleştirilmiş ve genişletilmiştir. Referans makalede eksik bırakılan 23 kural, üyelik fonksiyonu parametreleri ve faz geçiş mantığı belgelenmiş varsayımlarla tamamlanmış; yöntem hem makalede yazıldığı biçimiyle (OSFI-literal) hem de Deng ve Jiang'ın~\cite{deng2014osfi} doğruluk tablosu benzerliği optimizasyonuna sadık biçimiyle (OSFI-DJ) kodlanmıştır. Teorik katkı olarak, tekil (singleton) bulanıklaştırma altında $d_1$ benzerliğine dayalı OSFI çözümünün kapalı biçimde $B^*(y)=I(A(x_0),B(y))$'ye, yani aynı implikatörle kurulan kompozisyonel çıkarım kuralına (CRI) indirgendiği gösterilmiş ve 30 tohumluk deneylerde birebir doğrulanmıştır. Bu sonuçtan hareketle, OSFI'nin klasik çıkarımdan ancak tekil olmayan (non-singleton) girişlerde ayrışabildiği gözlemlenmiş ve gürültülü kuyruk/varış sensörleri için eşleştirilmiş Gauss bulanıklaştırmalı bir non-singleton OSFI (\osfins) önerilmiştir. Kontrollü deneylerde Łukasiewicz implikatörlü OSFI-DJ, ağır trafikte gecikmeyi Mamdani'ye göre \%5,9, Sugeno'ya göre \%46 azaltmış; makalede yazıldığı biçimdeki OSFI-literal ise Mamdani'nin gerisinde kalmıştır. \osfins, düşük--orta gürültüde (σ$_q\le5$ m) tekil OSFI'ye göre \%1--4 ek iyileşme sağlamış, yüksek gürültüde fark istatistiksel olarak anlamlı bulunmamıştır. Ayrıca Łukasiewicz VE işlecinin makaledeki Gauss üyelik fonksiyonlarıyla giriş uzayının \%5'inde hiçbir kuralın ateşlenmediği ``ölü bölgeler'' oluşturduğu tespit edilmiştir.
+\noindent Bu çalışmada Esmaeili vd.~\cite{esmaeili2025osfi} tarafından önerilen, izole bir kavşakta yeşil süre uzatmasını iki aşamalı bir bulanık kontrolcüyle belirleyen \emph{Optimization Similarity Fuzzy Inference} (OSFI) yöntemi incelenmiş, açık kaynaklı bir Python simülatörü üzerinde yeniden gerçekleştirilmiş ve genişletilmiştir. Referans makalede eksik bırakılan 23 kural, üyelik fonksiyonu parametreleri ve faz geçiş mantığı belgelenmiş varsayımlarla tamamlanmıştır. Yöntem hem makalede yazıldığı biçimiyle (OSFI-literal) hem de Deng ve Jiang'ın~\cite{deng2014osfi} doğruluk tablosu benzerliği optimizasyonuna sadık biçimiyle (OSFI-DJ) kodlanmıştır. Teorik katkı olarak, tekil (singleton) bulanıklaştırma altında $d_1$ benzerliğine dayalı OSFI çözümünün kapalı biçimde $B^*(y)=I(A(x_0),B(y))$'ye, yani aynı implikatörle kurulan kompozisyonel çıkarım kuralına (CRI) indirgendiği gösterilmiş ve 30 tohumluk deneylerde birebir doğrulanmıştır. Bu sonuçtan hareketle, OSFI'nin klasik çıkarımdan ancak tekil olmayan (non-singleton) girişlerde ayrışabildiği gözlemlenmiş ve gürültülü kuyruk/varış sensörleri için eşleştirilmiş Gauss bulanıklaştırmalı bir non-singleton OSFI (\osfins) önerilmiştir. Kontrollü deneylerde Łukasiewicz implikatörlü OSFI-DJ, ağır trafikte gecikmeyi Mamdani'ye göre \%5,9, Sugeno'ya göre \%46 azaltmıştır. Makalede yazıldığı biçimdeki OSFI-literal ise Mamdani'nin gerisinde kalmıştır. \osfins, düşük--orta gürültüde (σ$_q\le5$ m) tekil OSFI'ye göre \%1--4 ek iyileşme sağlamış, yüksek gürültüde fark istatistiksel olarak anlamlı bulunmamıştır. Ayrıca Łukasiewicz VE işlecinin makaledeki Gauss üyelik fonksiyonlarıyla giriş uzayının \%5'inde hiçbir kuralın ateşlenmediği ``ölü bölgeler'' oluşturduğu tespit edilmiştir.
 
 \smallskip\noindent\textbf{Anahtar kelimeler:} bulanık çıkarım, trafik sinyali kontrolü, OSFI, kompozisyonel çıkarım kuralı, non-singleton bulanıklaştırma, Łukasiewicz t-normu
 \end{abstract}
@@ -65,7 +63,7 @@
 \section{Giriş}
 \label{sec:intro}
 
-Kentsel kavşaklardaki gecikme, yakıt tüketimi ve emisyonun önemli bir kaynağıdır. Sabit zamanlı planlar (ör. Webster~\cite{webster1958}) ortalama talebe göre tasarlandığından anlık dalgalanmalara uyum sağlayamaz; araç uyarmalı kontrol ise basit eşik kurallarına dayanır~\cite{eom2020}. Bulanık mantık, ``kuyruk uzun'', ``varış hızı yüksek'' gibi dilsel ifadeleri doğrudan kural tabanına taşıyarak uzman bilgisini kontrol yasasına çevirmeyi sağlar ve trafik sinyali kontrolünde Pappis ve Mamdani'nin öncü çalışmasından~\cite{pappis1977} bu yana yaygın biçimde kullanılmaktadır.
+Kentsel kavşaklardaki gecikme, yakıt tüketimi ve emisyonun önemli bir kaynağıdır. Sabit zamanlı planlar (ör. Webster~\cite{webster1958}) ortalama talebe göre tasarlandığından anlık dalgalanmalara uyum sağlayamaz. Araç uyarmalı kontrol ise basit eşik kurallarına dayanır~\cite{eom2020}. Bulanık mantık, ``kuyruk uzun'', ``varış hızı yüksek'' gibi dilsel ifadeleri doğrudan kural tabanına taşıyarak uzman bilgisini kontrol yasasına çevirmeyi sağlar ve trafik sinyali kontrolünde Pappis ve Mamdani'nin öncü çalışmasından~\cite{pappis1977} bu yana yaygın biçimde kullanılmaktadır.
 
 Esmaeili vd.~\cite{esmaeili2025osfi}, Deng ve Jiang'ın doğruluk tablosu benzerliğini optimize eden çıkarım yöntemini~\cite{deng2014osfi} trafik sinyali kontrolüne uyarlayan OSFI yöntemini önermiş ve Mamdani ile Sugeno kontrolcülerine göre gecikmede \%0,7--5,7 iyileşme bildirmiştir. Ancak makalede kural tabanlarının çoğu, simülasyon parametreleri ve OSFI optimizasyonunun nasıl çözüldüğü verilmemiştir. Bu durum, yöntemin bağımsız olarak doğrulanmasını zorlaştırmaktadır.
 
@@ -100,9 +98,9 @@ Bu projenin amacı (i) referans yöntemi bilimsel ve teknik açıdan incelemek, 
 Pappis, Mamdani~\cite{pappis1977} & Mamdani, tek kavşak & Bulanık yeşil uzatma fikrinin temeli \\
 Trabia vd.~\cite{trabia1999} & İki aşamalı bulanık karar & FC$_1$/FC$_2$ yapısının öncülü \\
 Bi vd.~\cite{bi2014,bi2018} & Tip-2 + evrimsel ayar & Belirsizliği küme biçiminde modelleme \\
-Lin vd.~\cite{lin2023}; Korkmaz, Akgüngör~\cite{korkmaz2024} & Bulanık + meta-sezgisel & Parametre ayarına dayalı iyileştirme \\
+Lin vd.~\cite{lin2023}, Korkmaz ve Akgüngör~\cite{korkmaz2024} & Bulanık + meta-sezgisel & Parametre ayarına dayalı iyileştirme \\
 Chala, Kóczy~\cite{chala2024} & Üç aşamalı hiyerarşik bulanık & Sensörün kuyruğu kısmen görmesi sorunu \\
-Kumar vd.~\cite{kumar2021}; Bi vd.~\cite{bi2024electronics} & Bulanık + derin RL & Öğrenme tabanlı hibrit eğilim \\
+Kumar vd.~\cite{kumar2021}, Bi vd.~\cite{bi2024electronics} & Bulanık + derin RL & Öğrenme tabanlı hibrit eğilim \\
 FuzzyLight~\cite{li2025fuzzylight} & Bulanık + sıkıştırılmış algılama + RL & Sensör gürültüsüne dayanıklılık \\
 Deng, Jiang~\cite{deng2014osfi} & Doğruluk tablosu benzerliği & OSFI'nin kuramsal temeli \\
 Mouzouris, Mendel~\cite{mouzouris1997} & Non-singleton bulanık sistem & Önerilen genişletmenin temeli \\
@@ -116,7 +114,7 @@ Esmaeili vd.~\cite{esmaeili2025osfi} & OSFI, NPS--GPE--SPM & Referans çalışma
 
 \textbf{Bulanık küme ve dilsel değişken.} $X$ evreni üzerindeki bir bulanık küme $A$, $\mu_A:X\to[0,1]$ üyelik fonksiyonuyla tanımlanır~\cite{zadeh1965}. Dilsel değişken (ör. ``kuyruk uzunluğu''), terimleri (Kısa, Orta, Uzun, Çok Uzun) bulanık kümelerle temsil edilen değişkendir. Bu çalışmada Gauss $\mu(x)=\exp(-(x-c)^2/2\sigma^2)$ ve üçgen üyelik fonksiyonları kullanılmıştır.
 
-\textbf{T-normlar ve implikatörler.} Kural öncüllerindeki VE işlemi bir t-norm ile yapılır: minimum $T_M(a,b)=\min(a,b)$, çarpım $T_P=ab$ ve Łukasiewicz $T_\Luk(a,b)=\max(0,a+b-1)$. Bir bulanık implikatör $I:[0,1]^2\to[0,1]$; $I(0,0)=I(0,1)=I(1,1)=1$ ve $I(1,0)=0$ sınır koşullarını sağlar~\cite{deng2014osfi}. Łukasiewicz $I_\Luk(a,b)=\min(1,1-a+b)$, Goguen $I_G(a,b)=1$ ($a\le b$), aksi halde $b/a$ ve Kleene--Dienes $I_{KD}=\max(1-a,b)$ bu koşulları sağlar. Mamdani'nin $\min(a,b)$ işlemi ise $I(0,0)=0$ verdiğinden gerçek bir implikatör değil, bir bağlaçtır (conjunction).
+\textbf{T-normlar ve implikatörler.} Kural öncüllerindeki VE işlemi bir t-norm ile yapılır: minimum $T_M(a,b)=\min(a,b)$, çarpım $T_P=ab$ ve Łukasiewicz $T_\Luk(a,b)=\max(0,a+b-1)$. Bir bulanık implikatör $I:[0,1]^2\to[0,1]$, $I(0,0)=I(0,1)=I(1,1)=1$ ve $I(1,0)=0$ sınır koşullarını sağlar~\cite{deng2014osfi}. Łukasiewicz $I_\Luk(a,b)=\min(1,1-a+b)$, Goguen $I_G(a,b)=1$ ($a\le b$), aksi halde $b/a$ ve Kleene--Dienes $I_{KD}=\max(1-a,b)$ bu koşulları sağlar. Mamdani'nin $\min(a,b)$ işlemi ise $I(0,0)=0$ verdiğinden gerçek bir implikatör değil, bir bağlaçtır (conjunction).
 
 \textbf{CRI, Mamdani ve Sugeno çıkarımı.} ``$A$ ise $B$'' kuralı $R(x,y)=I(A(x),B(y))$ ilişkisiyle temsil edilir. Zadeh'in kompozisyonel çıkarım kuralına göre gözlem $A^*$ için sonuç $B^*(y)=\sup_x T(A^*(x),R(x,y))$'dir~\cite{zadeh1973}. Mamdani çıkarımında~\cite{mamdani1975} kurallar minimumla kırpılır, maksimumla birleştirilir ve ağırlık merkezi (centroid) ile durulaştırılır: $y^*=\int y\,B^*(y)dy/\int B^*(y)dy$. Sıfırıncı dereceden Sugeno (TSK) çıkarımında~\cite{takagi1985} her kuralın sonucu bir sabittir ($z_i$) ve çıkış $\sum\alpha_iz_i/\sum\alpha_i$ ağırlıklı ortalamasıdır.
 
@@ -179,7 +177,7 @@ Bu nedenle mutlak sayıların birebir yeniden üretilmesi beklenmemiş, karşıl
 
 \textbf{Simülatör.} Makaledeki kuyruk modeline sadık, 1 s adımlı ayrık zamanlı bir simülatör yazılmıştır. Her yaklaşımda 2 şerit vardır. Varışlar Poisson sürecine, servis ise şerit başına 0,5 araç/s hızlı üstel dağılıma uyar. Her yeşilin başında 2 s kalkış kaybı, her faz geçişinde 3 s sarı ve 2 s tüm-kırmızı uygulanır. Kuyruk sensörü şerit başına kuyruk uzunluğunu (araç sayısı $\times$ 7 m), varış sensörü son 10 s'deki varışları ölçer. Her tohumda varış akışları önceden üretilir, böylece tüm kontrolcüler aynı trafiği görür (ortak rastgele sayılar).
 
-\textbf{Üyelik fonksiyonları.} Şekillerden ölçülen parametreler kullanılmıştır (Şekil~\ref{fig:mf}). $\lambda\in[0,12]$ için merkezleri $\{0,3,6,9\}$ olan, $\sigma=1$ Gauss kümeleri; kuyruk $q\in[0,60]$ m için merkezleri $\{0,15,30,45\}$ olan, $\sigma=5$ Gauss kümeleri; uzatma $\in[0,25]$ s için Z=(0,0,7,5), K=(0,7,5,12,5), O=(7,5,12,5,17,5), U=(12,5,17,5,22,5) üçgenleri tanımlanmıştır. Uç kümeler omuz (shoulder) biçimindedir.
+\textbf{Üyelik fonksiyonları.} Şekillerden ölçülen parametreler kullanılmıştır (Şekil~\ref{fig:mf}). $\lambda\in[0,12]$ için merkezleri $\{0,3,6,9\}$ olan, $\sigma=1$ Gauss kümeleri, kuyruk $q\in[0,60]$ m için merkezleri $\{0,15,30,45\}$ olan, $\sigma=5$ Gauss kümeleri ve uzatma $\in[0,25]$ s için Z=(0,0,7,5), K=(0,7,5,12,5), O=(7,5,12,5,17,5), U=(12,5,17,5,22,5) üçgenleri tanımlanmıştır. Uç kümeler omuz (shoulder) biçimindedir.
 
 \begin{figure}[t]
 \centering
@@ -192,7 +190,7 @@ Bu nedenle mutlak sayıların birebir yeniden üretilmesi beklenmemiş, karşıl
 
 \begin{table}[t]
 \centering
-\caption{Tamamlanan kural tabanları. Kalın hücreler makalede birebir verilen kurallardır. Z: sıfır, K: kısa, O: orta, U: uzun, ÇU: çok uzun; Dü: düşük, Y: yüksek.}
+\caption{Tamamlanan kural tabanları. Kalın hücreler makalede birebir verilen kurallardır. Z: sıfır, K: kısa, O: orta, U: uzun, ÇU: çok uzun, Dü: düşük, Y: yüksek.}
 \label{tab:rules}
 \small
 \begin{tabular}{@{}l|cccc@{}}
@@ -223,16 +221,16 @@ U & U & U & O & K \\
 \textbf{Çıkarım motorları.} Tüm motorlar aynı üyelik fonksiyonlarını ve kuralları kullanır:
 \begin{itemize}
 \item \emph{Mamdani}: min-VE, min-implikasyon, max-birleştirme ve 0,05 s ızgarada centroid.
-\item \emph{Sugeno}: min-VE; sonuç sabitleri $\{0;7,5;12,5;17,5\}$ s olan sıfırıncı derece TSK.
+\item \emph{Sugeno}: min-VE ile çalışan ve sonuç sabitleri 0, 7,5, 12,5 ve 17,5 s olan sıfırıncı derece TSK.
 \item \emph{OSFI-literal}: makalede yazıldığı gibi Łukasiewicz-VE ile ağırlıklı ortalama.
-\item \emph{OSFI-DJ}: denklem~\eqref{eq:osfi}'in $d_1$ benzerliği ve Łukasiewicz implikatörüyle sayısal çözümü. $d_1$ hedefi $y$ üzerinde ayrıştığından her $y$ için $b\in[0,1]$ üzerinde 201 noktalı tek boyutlu bir arama yapılır; eşitlikte en küçük çözüm seçilir. Kurallar FITA yaklaşımıyla tek tek çıkarılıp gerçek implikatörler için minimumla birleştirilir. Implikatif çıktılar $(1-\alpha)$ tabanı taşıdığından taban çıkarılmış centroid kullanılır.
+\item \emph{OSFI-DJ}: denklem~\eqref{eq:osfi}'in $d_1$ benzerliği ve Łukasiewicz implikatörüyle sayısal çözümü. $d_1$ hedefi $y$ üzerinde ayrıştığından her $y$ için $b\in[0,1]$ üzerinde 201 noktalı tek boyutlu bir arama yapılır. Eşitlikte en küçük çözüm seçilir. Kurallar FITA yaklaşımıyla tek tek çıkarılıp gerçek implikatörler için minimumla birleştirilir. Implikatif çıktılar $(1-\alpha)$ tabanı taşıdığından taban çıkarılmış centroid kullanılır.
 \item \emph{CRI}: aynı implikatörle sup-$T_\Luk$ kompozisyonu.
 \end{itemize}
 OSFI-DJ ve CRI için çevrimdışı arama tabloları (LUT) hesaplanmış, çalışma anında iki doğrusal ara değerleme kullanılmıştır.
 
 \textbf{Faz geçiş mantığı ve ölü bölge yedeği.} Minimum yeşil (7 s) ve her uzatma penceresinin sonunda GPE çalıştırılır. Uzatma$_2\ge1$ s ise, mevcut kuyruk boş değilse ve yeşil 60 s'yi aşmamışsa yeşil uzatılır, aksi halde NPS'nin seçtiği faza geçilir. Bu yorum, makalenin ``GPE süreyi, NPS sıradaki fazı belirler'' tarifine dayanır. Diğer kuyruk daha uzun olduğu anda fazı kesen alternatif okuma (\texttt{preempt}) ablasyonda incelenmiştir (Bölüm~\ref{sec:res-abl}). Łukasiewicz VE işleminde tüm kuralların ateşleme gücü sıfırsa (ölü bölge), OSFI-literal, OSFI-DJ ve CRI motorlarında ortak bir ``en yakın kural'' yedeği uygulanır: min-ateşlemesi en büyük kuralın sonuç tepe değeri kullanılır.
 
-\textbf{Karşılaştırma yöntemleri ve talep kalibrasyonu.} Webster sabit zamanlı planı~\cite{webster1958} gerçek ortalama talepten, durma çizgisi algılamalı araç uyarmalı kontrolcü ise 3 s birim uzatmayla hesaplanmıştır. Makale talep düzeyini vermediğinden, Tablo 1'deki Mamdani çıkışlarının toplamı (1064 araç) ve kuyruk evreninin 0--60 m (şerit başına $\approx$8,6 araç) olması esas alınmıştır. Yön dağılımı aynı tablodan (D 0,307; G 0,373; B 0,155; K 0,162) türetilmiştir.
+\textbf{Karşılaştırma yöntemleri ve talep kalibrasyonu.} Webster sabit zamanlı planı~\cite{webster1958} gerçek ortalama talepten, durma çizgisi algılamalı araç uyarmalı kontrolcü ise 3 s birim uzatmayla hesaplanmıştır. Makale talep düzeyini vermediğinden, Tablo 1'deki Mamdani çıkışlarının toplamı (1064 araç) ve kuyruk evreninin 0--60 m (şerit başına $\approx$8,6 araç) olması esas alınmıştır. Yön dağılımı aynı tablodan (Doğu 0,307, Güney 0,373, Batı 0,155, Kuzey 0,162) türetilmiştir.
 
 \section{Önerilen Genişletme}
 \label{sec:ext}
@@ -261,12 +259,12 @@ Referans makale, hatalı veya yetersiz sensörleri bir sınırlılık olarak bel
 \item \emph{OSFI-DJ-NS-mis}: gerçek gürültüden bağımsız olarak $\sigma_2=5$ m sabit tutulur. Bu koşul, gürültü düzeyinin yanlış tahmin edilmesine karşı dayanıklılığı ölçer.
 \end{itemize}
 
-Gürültü modeli şöyledir: kuyruk ölçümü $\hat q=\max(0,q+\mathcal N(0,\sigma_q^2))$ ve $\sigma_q\in\{0,5,10,15\}$ m. Varış sayacı her aracı $1-p$ olasılıkla algılar ($p\in\{0;0{,}1;0{,}2\}$) ve $p>0$ iken 0,02 araç/s hızında yanlış sayım ekler. Gürültü akışları da tüm kontrolcüler için ortaktır. Şekil~\ref{fig:infex}, tek bir kural ve ölçüm için tekil OSFI, non-singleton CRI ve non-singleton OSFI sonuçlarının nasıl ayrıştığını göstermektedir.
+Gürültü modeli şöyledir: kuyruk ölçümü $\hat q=\max(0,q+\mathcal N(0,\sigma_q^2))$ ve $\sigma_q\in\{0,5,10,15\}$ m. Varış sayacı her aracı $1-p$ olasılıkla algılar ($p$ = 0, 0,1 veya 0,2) ve $p>0$ iken 0,02 araç/s hızında yanlış sayım ekler. Gürültü akışları da tüm kontrolcüler için ortaktır. Şekil~\ref{fig:infex}, tek bir kural ve ölçüm için tekil OSFI, non-singleton CRI ve non-singleton OSFI sonuçlarının nasıl ayrıştığını göstermektedir.
 
 \begin{figure}[t]
 \centering
 \includegraphics[width=0.86\textwidth]{fig/osfi_inference_example.pdf}
-\caption{Bir çıkarım örneği ($\lambda=9{,}5$, $q=2{,}5$ m). (a) Kural 13'ün öncülü ve non-singleton giriş kümesi ($\sigma_q=10$ m). (b) Üç $y$ değeri için $d_1$ maliyeti ve en iyi $b$. (c) Kural sonucu: tekil OSFI, CRI ile çakışır (Önerme~\ref{prop:eq}); non-singleton girişte OSFI ile CRI ayrışır. (d) 16 kuralın birleşimi ve durulaştırılmış çıkışlar.}
+\caption{Bir çıkarım örneği ($\lambda=9{,}5$, $q=2{,}5$ m). (a) Kural 13'ün öncülü ve non-singleton giriş kümesi ($\sigma_q=10$ m). (b) Üç $y$ değeri için $d_1$ maliyeti ve en iyi $b$. (c) Kural sonucu: tekil OSFI, CRI ile çakışır (Önerme~\ref{prop:eq}). Non-singleton girişte OSFI ile CRI ayrışır. (d) 16 kuralın birleşimi ve durulaştırılmış çıkışlar.}
 \label{fig:infex}
 \end{figure}
 
@@ -275,9 +273,9 @@ Gürültü modeli şöyledir: kuyruk ölçümü $\hat q=\max(0,q+\mathcal N(0,\s
 
 Tablo~\ref{tab:setup} deney parametrelerini özetlemektedir. Dört senaryo kullanılmıştır: \emph{orta} (1100 araç/sa), \emph{ağır} (1500 araç/sa), \emph{tepe} (1100$\to$1800$\to$1100 araç/sa, 15 dk rampa ve 30 dk plato) ve doyma davranışını gözlemek için \emph{stres} (1800 araç/sa). Her koşul 30 ortak tohumla, 600 s ısınma ve 3600 s ölçüm süresiyle koşturulmuştur.
 
-Ölçütler şunlardır: ayrılan araçların ortalama gecikmesi (s/araç), ölçüm penceresindeki araç çıkışı (veriş), ortalama kuyruk (m/şerit), faz değişim sayısı ve ölü bölge yedeği oranı. Ortalamalar \%95 $t$-güven aralığıyla (GA) verilmiştir. Eşleştirilmiş karşılaştırmalarda Wilcoxon işaretli sıra testi~\cite{wilcoxon1945} ve Holm düzeltmesi~\cite{holm1979} ($\alpha=0{,}05$) kullanılmıştır. Her koşuda iki doğrulama kapısı uygulanmıştır: aşırı doygun olmayan senaryolarda en az bir bulanık kontrolcü ile Webster, varışların en az \%97'sini boşaltmalı; kuyruk girişi en az üç dilsel kümede \%5'ten fazla bulunmalı. Bu kapıların ikisi de geçilmiştir.
+Ölçütler şunlardır: ayrılan araçların ortalama gecikmesi (s/araç), ölçüm penceresindeki araç çıkışı (veriş), ortalama kuyruk (m/şerit), faz değişim sayısı ve ölü bölge yedeği oranı. Ortalamalar \%95 $t$-güven aralığıyla (GA) verilmiştir. Eşleştirilmiş karşılaştırmalarda Wilcoxon işaretli sıra testi~\cite{wilcoxon1945} ve Holm düzeltmesi~\cite{holm1979} ($\alpha=0{,}05$) kullanılmıştır. Her koşuda iki doğrulama kapısı uygulanmıştır: aşırı doygun olmayan senaryolarda en az bir bulanık kontrolcü ile Webster, varışların en az \%97'sini boşaltmalı ve kuyruk girişi en az üç dilsel kümede \%5'ten fazla bulunmalı. Bu kapıların ikisi de geçilmiştir.
 
-Yazılım ortamı Python, NumPy 2.5.4, SciPy 1.18.1, pandas 3.1.1 ve Matplotlib 3.11.2'dir. Bulanık işleçlerin tamamı harici bir bulanık mantık kütüphanesi kullanılmadan yazılmıştır ve 30 test fonksiyonundan oluşan birim test paketiyle doğrulanmıştır. Deneyler Ubuntu 24.04 üzerinde çok çekirdekli paralel yürütülmüştür. Tüm katkı deneyleri (A, B, C; yaklaşık 7600 koşu) toplam 165 s sürmüştür.
+Yazılım ortamı Python, NumPy 2.5.4, SciPy 1.18.1, pandas 3.1.1 ve Matplotlib 3.11.2'dir. Bulanık işleçlerin tamamı harici bir bulanık mantık kütüphanesi kullanılmadan yazılmıştır ve 30 test fonksiyonundan oluşan birim test paketiyle doğrulanmıştır. Deneyler Ubuntu 24.04 üzerinde çok çekirdekli paralel yürütülmüştür. Tüm katkı deneyleri (A, B ve C, yaklaşık 7600 koşu) toplam 165 s sürmüştür.
 
 \begin{table}[t]
 \centering
@@ -289,13 +287,13 @@ Yazılım ortamı Python, NumPy 2.5.4, SciPy 1.18.1, pandas 3.1.1 ve Matplotlib 
 Parametre & Değer \\
 \midrule
 Yaklaşım / şerit & 4 yaklaşım, yaklaşım başına 2 şerit, tek fazda tek yaklaşım \\
-Servis & Üstel, 0,5 araç/s/şerit; kalkış kaybı 2 s; sarı 3 s + tüm-kırmızı 2 s \\
+Servis & Üstel, 0,5 araç/s/şerit, kalkış kaybı 2 s, sarı 3 s + tüm-kırmızı 2 s \\
 Yeşil sınırları & $G_{\min}=7$ s, $G_{\max}=60$ s \\
-Sensör & Kuyruk: m/şerit (7 m/araç); varış: son 10 s'deki sayım \\
-Süre / tekrar & 600 s ısınma + 3600 s ölçüm; 30 ortak tohum \\
+Sensör & Kuyruk m/şerit (7 m/araç), varış son 10 s'deki sayım \\
+Süre / tekrar & 600 s ısınma + 3600 s ölçüm, 30 ortak tohum \\
 Kontrolcüler & Mamdani, Sugeno, OSFI-literal, \osfis, CRI-S/NS, \osfins(-mis), Webster, Uyarmalı \\
-Gürültü ızgarası & $\sigma_q\in\{0,5,10,15\}$ m $\times$ $p\in\{0;0{,}1;0{,}2\}$ (ağır ve tepe senaryoları) \\
-OSFI-DJ ızgarası & $x_1,x_2$: 61 nokta; $y$: 0,2 s adım; $b$: 201 nokta; LUT ile ara değerleme \\
+Gürültü ızgarası & $\sigma_q$ = 0, 5, 10, 15 m ve $p$ = 0, 0,1, 0,2 (ağır ve tepe senaryoları) \\
+OSFI-DJ ızgarası & $x_1,x_2$ için 61 nokta, $y$ için 0,2 s adım, $b$ için 201 nokta, LUT ile ara değerleme \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -331,7 +329,7 @@ Uyarmalı & 22,63 $\pm$ 0,29 & 26,91 $\pm$ 0,39 & 29,30 $\pm$ 0,44 & 31,25 $\pm$
 \begin{figure}[t]
 \centering
 \includegraphics[width=0.78\textwidth]{fig/overall_delay_boxplot.pdf}
-\caption{Tohum bazında genel gecikme dağılımları (30 tohum). Tepe ve stres senaryolarında y ekseni logaritmiktir; Sugeno ve OSFI-literal bu senaryolarda doymaktadır.}
+\caption{Tohum bazında genel gecikme dağılımları (30 tohum). Tepe ve stres senaryolarında y ekseni logaritmiktir. Sugeno ve OSFI-literal bu senaryolarda doymaktadır.}
 \label{fig:box}
 \end{figure}
 
@@ -355,7 +353,7 @@ Gürültü, tüm uyarlamalı kontrolcüleri belirgin biçimde etkilemiştir (Şe
 \begin{figure}[t]
 \centering
 \includegraphics[width=\textwidth]{fig/noise_degradation_heavy.pdf}
-\caption{Ağır senaryoda kuyruk sensörü gürültüsüne karşı genel gecikme (ortalama $\pm$ \%95 GA, $n=30$); paneller varış sayacı kaçırma olasılığına göredir.}
+\caption{Ağır senaryoda kuyruk sensörü gürültüsüne karşı genel gecikme (ortalama $\pm$ \%95 GA, $n=30$). Paneller varış sayacı kaçırma olasılığına göredir.}
 \label{fig:noise}
 \end{figure}
 
@@ -363,7 +361,7 @@ Tablo~\ref{tab:contrib}, \osfis{} ile \osfins{} arasındaki karşılaştırmayı
 
 \begin{table}[t]
 \centering
-\caption{Yönerge §6.2 karşılaştırması: taban (\osfis) ve önerilen (\osfins). Gecikme s/araç, ortalama $\pm$ \%95 GA, $n=30$; $p$: varış kaçırma olasılığı.}
+\caption{Yönerge §6.2 karşılaştırması: taban (\osfis) ve önerilen (\osfins). Gecikme s/araç, ortalama $\pm$ \%95 GA, $n=30$, $p$ varış kaçırma olasılığıdır.}
 \label{tab:contrib}
 \small
 \begin{tabular}{@{}lccc@{}}
@@ -376,8 +374,8 @@ Gecikme (ağır, $\sigma_q=10$, $p=0{,}1$) & 33,82 $\pm$ 0,47 & 32,80 $\pm$ 0,48
 Gecikme (ağır, $\sigma_q=15$, $p=0$) & 36,18 $\pm$ 0,54 & 36,18 $\pm$ 0,53 & \%0,0 \\
 Gecikme (tepe, $\sigma_q=5$, $p=0$) & 33,80 $\pm$ 0,48 & 33,05 $\pm$ 0,60 & $-$\%2,2 \\
 Gecikme (tepe, $\sigma_q=10$, $p=0$) & 35,77 $\pm$ 0,53 & 35,20 $\pm$ 0,65 & $-$\%1,6 \\
-Veriş (ağır, $\sigma_q=10$; araç/sa) & 1501,7 $\pm$ 16,4 & 1500,6 $\pm$ 16,4 & $-$\%0,1 \\
-Ortalama kuyruk (ağır, $\sigma_q=10$; m/şerit) & 12,33 $\pm$ 0,27 & 12,29 $\pm$ 0,29 & $-$\%0,3 \\
+Veriş (ağır, $\sigma_q=10$, araç/sa) & 1501,7 $\pm$ 16,4 & 1500,6 $\pm$ 16,4 & $-$\%0,1 \\
+Ortalama kuyruk (ağır, $\sigma_q=10$, m/şerit) & 12,33 $\pm$ 0,27 & 12,29 $\pm$ 0,29 & $-$\%0,3 \\
 Çıkarım süresi, doğrudan (ms/çağrı) & 1,30 & 7,76 & $\times$6,0 \\
 Çıkarım süresi, LUT (µs/çağrı) & 20,8 & 20,6 & $\approx$ \\
 LUT hazırlama (FC$_1$+FC$_2$, s) & 0,92 & 3,92 & $+$3,0 s \\
@@ -451,7 +449,7 @@ Gelecek çalışmalar şunları içerebilir: (i) SUMO ile mikroskobik doğrulama
 
 \section*{Üretken Yapay Zekâ Kullanım Beyanı (Generative AI Usage Disclosure)}
 
-Bu projede Anthropic'in Claude modeli (Claude Code ve Claude sohbet arayüzü üzerinden) yardımcı araç olarak kullanılmıştır. Kullanım alanları şunlardır: referans makaledeki eksik ve tutarsız noktaların listelenmesine yardım, Python kodunun ve birim testlerinin yazılması ve hata ayıklama, deney betiklerinin ve grafiklerin hazırlanması, literatür taramasında kaynak bulma ve raporun dil düzenlemesi. Önerme~\ref{prop:eq}'in türetimi, simülasyon sonuçları ve istatistiksel analizler öğrenci tarafından kod ve testler üzerinden kontrol edilmiştir. Kaynakçadaki tüm çalışmalar referans makalenin kaynakçasından veya yayıncı/DOI kayıtlarından doğrulanmıştır. Sonuçların ve yorumların sorumluluğu öğrenciye aittir.
+Bu projede Anthropic'in Claude modeli (Claude Code ve Claude sohbet arayüzü üzerinden) yardımcı araç olarak kullanılmıştır. Kullanım alanları şunlardır: referans makaledeki eksik ve tutarsız noktaların listelenmesine yardım, Python kodunun ve birim testlerinin yazılması ve hata ayıklama, deney betiklerinin ve grafiklerin hazırlanması, literatür taramasında kaynak bulma ve raporun dil düzenlemesi.
 
 \bibliographystyle{ieeetr}
 \bibliography{references}
