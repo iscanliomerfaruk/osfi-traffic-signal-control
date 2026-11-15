@@ -5,10 +5,12 @@
 ## Student Information
 
 - **Ad Soyad:** Ömer Faruk İşcanlı
-- **Öğrenci No:** `<doldurulacak>`
+- **Öğrenci No:** 1306220071
 - **Ders:** Bulanık Mantık (Fuzzy Logic) — Dönem Projesi
-- **Ders Sorumlusu:** `<doldurulacak>`
-- **GitHub Deposu:** `https://github.com/oiscanli/osfi-traffic-signal-control`
+- **Ders Sorumlusu:** Prof. Dr. Rüya Şamlı
+- **GitHub Deposu:** `https://github.com/iscanliomerfaruk/osfi-traffic-signal-control`
+- **Teknik Rapor:** [`report/report.pdf`](report/report.pdf)
+- **Sunum:** [`presentation/OSFI_Sunum.pptx`](presentation/OSFI_Sunum.pptx) ([PDF](presentation/OSFI_Sunum.pdf))
 
 ---
 
@@ -129,7 +131,7 @@ Referans makalede harici bir veri seti dosyası paylaşılmamıştır; dört faz
 ## Installation
 
 ```bash
-git clone https://github.com/oiscanli/osfi-traffic-signal-control.git
+git clone https://github.com/iscanliomerfaruk/osfi-traffic-signal-control.git
 cd osfi-traffic-signal-control
 python3 -m venv .venv
 source .venv/bin/activate
