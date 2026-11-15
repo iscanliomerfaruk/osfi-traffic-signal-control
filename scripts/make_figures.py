@@ -1,4 +1,4 @@
-"""CLI script to render all PDF and PNG figures for Stage 1."""
+"""CLI script to render all PDF and PNG figures for Stage 1 and Stage 2."""
 
 from __future__ import annotations
 
@@ -11,7 +11,7 @@ from osfi_tsc.plotting import generate_all_figures
 def main() -> None:
     """Parse arguments and generate all figures."""
     parser = argparse.ArgumentParser(
-        description="Generate Stage 1 figures in PDF and PNG formats (300 dpi)."
+        description="Generate Stage 1 and Stage 2 figures in PDF and PNG formats (300 dpi)."
     )
     parser.add_argument(
         "--results",
