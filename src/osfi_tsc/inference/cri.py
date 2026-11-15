@@ -209,6 +209,11 @@ def precompute_stage_antecedents_and_consequents(
     )
 
 
+_STAGE_PRECOMP_CACHE: dict[tuple[str, bool, int, int, float], tuple[Any, ...]] = {}
+_CRI_RTABLE_CACHE: dict[tuple[str, str, bool, int, int, float], np.ndarray] = {}
+_CRI_MEM_LUT_CACHE: dict[str, dict[str, Any]] = {}
+
+
 def _cri_lut_row_worker(
     args: tuple[int, float, np.ndarray, dict[str, Any]],
 ) -> tuple[int, np.ndarray, np.ndarray]:
@@ -253,6 +258,15 @@ class CRIStageEngine:
         self.y_step = float(y_step)
         self.bilinear_singleton = bool(bilinear_singleton)
 
+        p_key = (stage, bool(shoulder_edges), int(x1_pts), int(x2_pts), float(y_step))
+        if p_key not in _STAGE_PRECOMP_CACHE:
+            _STAGE_PRECOMP_CACHE[p_key] = precompute_stage_antecedents_and_consequents(
+                stage=stage,
+                shoulder_edges=shoulder_edges,
+                x1_pts=x1_pts,
+                x2_pts=x2_pts,
+                y_step=y_step,
+            )
         (
             self.x1_grid,
             self.x2_grid,
@@ -261,18 +275,15 @@ class CRIStageEngine:
             self.a_rules,
             self.b_rules,
             self.out_mfs,
-        ) = precompute_stage_antecedents_and_consequents(
-            stage=stage,
-            shoulder_edges=shoulder_edges,
-            x1_pts=x1_pts,
-            x2_pts=x2_pts,
-            y_step=y_step,
-        )
+        ) = _STAGE_PRECOMP_CACHE[p_key]
 
-        self.r_tables = np.asarray(
-            self.implicator_fn(self.a_rules[:, :, None], self.b_rules[:, None, :]),
-            dtype=float,
-        )
+        r_key = (stage, implicator, bool(shoulder_edges), int(x1_pts), int(x2_pts), float(y_step))
+        if r_key not in _CRI_RTABLE_CACHE:
+            _CRI_RTABLE_CACHE[r_key] = np.asarray(
+                self.implicator_fn(self.a_rules[:, :, None], self.b_rules[:, None, :]),
+                dtype=float,
+            )
+        self.r_tables = _CRI_RTABLE_CACHE[r_key]
 
     def _init_kwargs(self) -> dict[str, Any]:
         return {
@@ -453,9 +464,12 @@ class CRIInference:
         self.cache_dir.mkdir(parents=True, exist_ok=True)
         cfg_hash = stage_eng.config_hash()
         cache_file = self.cache_dir / f"lut_cri_{stage_eng.stage}_{cfg_hash}.npz"
+        cache_key = str(cache_file.resolve())
         if cache_file.exists():
+            if cache_key in _CRI_MEM_LUT_CACHE:
+                return _CRI_MEM_LUT_CACHE[cache_key]
             data = np.load(cache_file)
-            return {
+            loaded = {
                 "x1_lut": data["x1_lut"],
                 "x2_lut": data["x2_lut"],
                 "table": data["table"],
@@ -464,6 +478,8 @@ class CRIInference:
                 "cache_file": str(cache_file),
                 "from_cache": True,
             }
+            _CRI_MEM_LUT_CACHE[cache_key] = loaded
+            return loaded
 
         if stage_eng.stage == "fc1":
             x1_lut = np.arange(0.0, 12.0 + 0.1, 0.25, dtype=float)

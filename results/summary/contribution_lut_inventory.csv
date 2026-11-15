@@ -1,0 +1,45 @@
+engine,stage,config_label,implicator,tie_break,defuzz_method,shoulder_edges,sigma1,sigma2,config_hash,build_time_s,cache_file
+OSFI-DJ,fc1,OSFI-DJ-S (singleton),lukasiewicz,smallest,centroid_above_floor,True,0.0,0.0,f0cd9ff537f2aa73,1.6787192470001173,results/cache/lut_osfi_dj_fc1_f0cd9ff537f2aa73.npz
+OSFI-DJ,fc2,OSFI-DJ-S (singleton),lukasiewicz,smallest,centroid_above_floor,True,0.0,0.0,42c5986621fa680a,2.9874860019999687,results/cache/lut_osfi_dj_fc2_42c5986621fa680a.npz
+OSFI-DJ,fc1,"OSFI-DJ-NS (sigma_q=0, p_miss=0)",lukasiewicz,smallest,centroid_above_floor,True,0.5,1.0,e631861af11481ad,1.2814135839998926,results/cache/lut_osfi_dj_fc1_e631861af11481ad.npz
+OSFI-DJ,fc2,"OSFI-DJ-NS (sigma_q=0, p_miss=0)",lukasiewicz,smallest,centroid_above_floor,True,0.0,1.0,1d9e20406cbbd5dd,1.5150475949999418,results/cache/lut_osfi_dj_fc2_1d9e20406cbbd5dd.npz
+CRI,fc1,"CRI-NS (sigma_q=0, p_miss=0)",lukasiewicz,n/a,centroid_above_floor,True,0.5,1.0,c8391aee27f10dac,0.3234213800001271,results/cache/lut_cri_fc1_c8391aee27f10dac.npz
+CRI,fc2,"CRI-NS (sigma_q=0, p_miss=0)",lukasiewicz,n/a,centroid_above_floor,True,0.0,1.0,3efa4b612673f337,0.23290739000003668,results/cache/lut_cri_fc2_3efa4b612673f337.npz
+OSFI-DJ,fc1,"OSFI-DJ-NS (sigma_q=0, p_miss=0.1)",lukasiewicz,smallest,centroid_above_floor,True,0.7937253933193773,1.0,95ec9bd468f567e3,1.739969962000032,results/cache/lut_osfi_dj_fc1_95ec9bd468f567e3.npz
+CRI,fc1,"CRI-NS (sigma_q=0, p_miss=0.1)",lukasiewicz,n/a,centroid_above_floor,True,0.7937253933193773,1.0,02689ddb8d89cf4d,0.4854522150003504,results/cache/lut_cri_fc1_02689ddb8d89cf4d.npz
+OSFI-DJ,fc1,"OSFI-DJ-NS (sigma_q=0, p_miss=0.2)",lukasiewicz,smallest,centroid_above_floor,True,0.8774964387392122,1.0,3f4c9a45ddd15cd5,1.8493240410002727,results/cache/lut_osfi_dj_fc1_3f4c9a45ddd15cd5.npz
+CRI,fc1,"CRI-NS (sigma_q=0, p_miss=0.2)",lukasiewicz,n/a,centroid_above_floor,True,0.8774964387392122,1.0,698c089f0f2983ea,0.5612857450000774,results/cache/lut_cri_fc1_698c089f0f2983ea.npz
+OSFI-DJ,fc1,"OSFI-DJ-NS (sigma_q=5, p_miss=0)",lukasiewicz,smallest,centroid_above_floor,True,0.5,5.0,181bf4f90d4d364f,4.114588163999997,results/cache/lut_osfi_dj_fc1_181bf4f90d4d364f.npz
+OSFI-DJ,fc2,"OSFI-DJ-NS (sigma_q=5, p_miss=0)",lukasiewicz,smallest,centroid_above_floor,True,0.0,5.0,d0d1583df44277a4,1.7461302289998457,results/cache/lut_osfi_dj_fc2_d0d1583df44277a4.npz
+CRI,fc1,"CRI-NS (sigma_q=5, p_miss=0)",lukasiewicz,n/a,centroid_above_floor,True,0.5,5.0,ba1df8aca84aef03,1.0802147919998788,results/cache/lut_cri_fc1_ba1df8aca84aef03.npz
+CRI,fc2,"CRI-NS (sigma_q=5, p_miss=0)",lukasiewicz,n/a,centroid_above_floor,True,0.0,5.0,87ae3e399576da67,0.3568424039999627,results/cache/lut_cri_fc2_87ae3e399576da67.npz
+OSFI-DJ,fc1,"OSFI-DJ-NS (sigma_q=5, p_miss=0.1)",lukasiewicz,smallest,centroid_above_floor,True,0.7937253933193773,5.0,a4e78e729cbb69e2,6.0176185059999625,results/cache/lut_osfi_dj_fc1_a4e78e729cbb69e2.npz
+CRI,fc1,"CRI-NS (sigma_q=5, p_miss=0.1)",lukasiewicz,n/a,centroid_above_floor,True,0.7937253933193773,5.0,ea490df9f0833eb6,4.78429319199995,results/cache/lut_cri_fc1_ea490df9f0833eb6.npz
+OSFI-DJ,fc1,"OSFI-DJ-NS (sigma_q=5, p_miss=0.2)",lukasiewicz,smallest,centroid_above_floor,True,0.8774964387392122,5.0,a3e3c57ac73050af,6.461057598000025,results/cache/lut_osfi_dj_fc1_a3e3c57ac73050af.npz
+CRI,fc1,"CRI-NS (sigma_q=5, p_miss=0.2)",lukasiewicz,n/a,centroid_above_floor,True,0.8774964387392122,5.0,1c70624deba2df0a,5.552767911000046,results/cache/lut_cri_fc1_1c70624deba2df0a.npz
+OSFI-DJ,fc1,"OSFI-DJ-NS (sigma_q=10, p_miss=0)",lukasiewicz,smallest,centroid_above_floor,True,0.5,10.0,40ce4e120c956fc8,6.90466163200017,results/cache/lut_osfi_dj_fc1_40ce4e120c956fc8.npz
+OSFI-DJ,fc2,"OSFI-DJ-NS (sigma_q=10, p_miss=0)",lukasiewicz,smallest,centroid_above_floor,True,0.0,10.0,05e06bf7ade3bb8a,1.8782865829998627,results/cache/lut_osfi_dj_fc2_05e06bf7ade3bb8a.npz
+CRI,fc1,"CRI-NS (sigma_q=10, p_miss=0)",lukasiewicz,n/a,centroid_above_floor,True,0.5,10.0,72bedce35f4bb8e0,5.904102086999956,results/cache/lut_cri_fc1_72bedce35f4bb8e0.npz
+CRI,fc2,"CRI-NS (sigma_q=10, p_miss=0)",lukasiewicz,n/a,centroid_above_floor,True,0.0,10.0,3d5c603ffdf7c550,0.49521454300020196,results/cache/lut_cri_fc2_3d5c603ffdf7c550.npz
+OSFI-DJ,fc1,"OSFI-DJ-NS (sigma_q=10, p_miss=0.1)",lukasiewicz,smallest,centroid_above_floor,True,0.7937253933193773,10.0,15fcf62518451b33,10.04942145699988,results/cache/lut_osfi_dj_fc1_15fcf62518451b33.npz
+CRI,fc1,"CRI-NS (sigma_q=10, p_miss=0.1)",lukasiewicz,n/a,centroid_above_floor,True,0.7937253933193773,10.0,a0380e04cd5b37d5,9.026627278999968,results/cache/lut_cri_fc1_a0380e04cd5b37d5.npz
+OSFI-DJ,fc1,"OSFI-DJ-NS (sigma_q=10, p_miss=0.2)",lukasiewicz,smallest,centroid_above_floor,True,0.8774964387392122,10.0,1d987d604838f59d,11.19311632200015,results/cache/lut_osfi_dj_fc1_1d987d604838f59d.npz
+CRI,fc1,"CRI-NS (sigma_q=10, p_miss=0.2)",lukasiewicz,n/a,centroid_above_floor,True,0.8774964387392122,10.0,614f6b6356609e0d,9.887389865000387,results/cache/lut_cri_fc1_614f6b6356609e0d.npz
+OSFI-DJ,fc1,"OSFI-DJ-NS (sigma_q=15, p_miss=0)",lukasiewicz,smallest,centroid_above_floor,True,0.5,15.0,9811ea49e0653840,8.524059599999873,results/cache/lut_osfi_dj_fc1_9811ea49e0653840.npz
+OSFI-DJ,fc2,"OSFI-DJ-NS (sigma_q=15, p_miss=0)",lukasiewicz,smallest,centroid_above_floor,True,0.0,15.0,cf9a79af322c13b6,1.9257140609997805,results/cache/lut_osfi_dj_fc2_cf9a79af322c13b6.npz
+CRI,fc1,"CRI-NS (sigma_q=15, p_miss=0)",lukasiewicz,n/a,centroid_above_floor,True,0.5,15.0,ecec328dd3f5854c,8.138337241000045,results/cache/lut_cri_fc1_ecec328dd3f5854c.npz
+CRI,fc2,"CRI-NS (sigma_q=15, p_miss=0)",lukasiewicz,n/a,centroid_above_floor,True,0.0,15.0,121461714d502d74,0.42662372999984655,results/cache/lut_cri_fc2_121461714d502d74.npz
+OSFI-DJ,fc1,"OSFI-DJ-NS (sigma_q=15, p_miss=0.1)",lukasiewicz,smallest,centroid_above_floor,True,0.7937253933193773,15.0,4eb5ae87aea301b7,12.721494659999735,results/cache/lut_osfi_dj_fc1_4eb5ae87aea301b7.npz
+CRI,fc1,"CRI-NS (sigma_q=15, p_miss=0.1)",lukasiewicz,n/a,centroid_above_floor,True,0.7937253933193773,15.0,5542f7d0da829d3d,12.620928556999843,results/cache/lut_cri_fc1_5542f7d0da829d3d.npz
+OSFI-DJ,fc1,"OSFI-DJ-NS (sigma_q=15, p_miss=0.2)",lukasiewicz,smallest,centroid_above_floor,True,0.8774964387392122,15.0,7b577b9a267e82f1,14.16976217399997,results/cache/lut_osfi_dj_fc1_7b577b9a267e82f1.npz
+CRI,fc1,"CRI-NS (sigma_q=15, p_miss=0.2)",lukasiewicz,n/a,centroid_above_floor,True,0.8774964387392122,15.0,ea5d0811c38fc648,13.837038048000068,results/cache/lut_cri_fc1_ea5d0811c38fc648.npz
+OSFI-DJ,fc1,Ablation: Goguen implicator,goguen,smallest,centroid_above_floor,True,0.5,10.0,ad274d585e340ab0,7.161630825999964,results/cache/lut_osfi_dj_fc1_ad274d585e340ab0.npz
+OSFI-DJ,fc2,Ablation: Goguen implicator,goguen,smallest,centroid_above_floor,True,0.0,10.0,c0bc75da1507bfd6,2.4947522110001046,results/cache/lut_osfi_dj_fc2_c0bc75da1507bfd6.npz
+OSFI-DJ,fc1,Ablation: Kleene-Dienes implicator,kleene_dienes,smallest,centroid_above_floor,True,0.5,10.0,6c8a54c00e8e133b,7.062434135000331,results/cache/lut_osfi_dj_fc1_6c8a54c00e8e133b.npz
+OSFI-DJ,fc2,Ablation: Kleene-Dienes implicator,kleene_dienes,smallest,centroid_above_floor,True,0.0,10.0,be3b130b4ed1b337,2.4213851890003752,results/cache/lut_osfi_dj_fc2_be3b130b4ed1b337.npz
+OSFI-DJ,fc1,Ablation: Midpoint tie-break,lukasiewicz,midpoint,centroid_above_floor,True,0.5,10.0,7d5583279fb29541,7.10277706099987,results/cache/lut_osfi_dj_fc1_7d5583279fb29541.npz
+OSFI-DJ,fc2,Ablation: Midpoint tie-break,lukasiewicz,midpoint,centroid_above_floor,True,0.0,10.0,3c0cb6ba3a2ce110,2.458162800000082,results/cache/lut_osfi_dj_fc2_3c0cb6ba3a2ce110.npz
+OSFI-DJ,fc1,Ablation: Standard centroid (with floor),lukasiewicz,smallest,centroid,True,0.5,10.0,5c5307da8d6d85f4,7.076841143000365,results/cache/lut_osfi_dj_fc1_5c5307da8d6d85f4.npz
+OSFI-DJ,fc2,Ablation: Standard centroid (with floor),lukasiewicz,smallest,centroid,True,0.0,10.0,36aa307a72187911,2.45384081300017,results/cache/lut_osfi_dj_fc2_36aa307a72187911.npz
+OSFI-DJ,fc1,Ablation: shoulder_edges = False,lukasiewicz,smallest,centroid_above_floor,False,0.5,10.0,ac33fca3bba861a6,3.7335040240000126,results/cache/lut_osfi_dj_fc1_ac33fca3bba861a6.npz
+OSFI-DJ,fc2,Ablation: shoulder_edges = False,lukasiewicz,smallest,centroid_above_floor,False,0.0,10.0,f11090a69484b81b,2.1465584269999454,results/cache/lut_osfi_dj_fc2_f11090a69484b81b.npz

@@ -70,6 +70,11 @@ def _select_b_from_objectives(
     return np.clip(b_out, 0.0, 1.0)
 
 
+_OSFI_PRECOMP_CACHE: dict[tuple[str, bool, int, int, float], tuple[Any, ...]] = {}
+_OSFI_RTABLE_CACHE: dict[tuple[str, str, bool, int, int, float], tuple[Any, ...]] = {}
+_OSFI_MEM_LUT_CACHE: dict[str, dict[str, Any]] = {}
+
+
 def _osfi_lut_row_worker(
     args: tuple[int, float, np.ndarray, dict[str, Any]],
 ) -> tuple[int, np.ndarray, np.ndarray]:
@@ -123,6 +128,15 @@ class OSFIDJStageEngine:
 
         self.b_grid = np.linspace(0.0, 1.0, self.b_pts, dtype=float)
 
+        p_key = (stage, bool(shoulder_edges), int(x1_pts), int(x2_pts), float(y_step))
+        if p_key not in _OSFI_PRECOMP_CACHE:
+            _OSFI_PRECOMP_CACHE[p_key] = precompute_stage_antecedents_and_consequents(
+                stage=stage,
+                shoulder_edges=shoulder_edges,
+                x1_pts=x1_pts,
+                x2_pts=x2_pts,
+                y_step=y_step,
+            )
         (
             self.x1_grid,
             self.x2_grid,
@@ -131,32 +145,40 @@ class OSFIDJStageEngine:
             self.a_rules,
             self.b_rules,
             self.out_mfs,
-        ) = precompute_stage_antecedents_and_consequents(
-            stage=stage,
-            shoulder_edges=shoulder_edges,
-            x1_pts=x1_pts,
-            x2_pts=x2_pts,
-            y_step=y_step,
-        )
+        ) = _OSFI_PRECOMP_CACHE[p_key]
 
-        self.r_tables = np.asarray(
-            self.implicator_fn(self.a_rules[:, :, None], self.b_rules[:, None, :]),
-            dtype=float,
-        )
-
-        self._rule_pos_idx: list[np.ndarray] = []
-        self._rule_u_inv: list[np.ndarray] = []
-        self._rule_r_pos_u: list[np.ndarray] = []
-        for idx in range(len(self.rules)):
-            pos = np.flatnonzero(self.a_rules[idx] > 0.0)
-            u_vals, u_inv = np.unique(self.b_rules[idx], return_inverse=True)
-            r_pu = np.asarray(
-                self.implicator_fn(self.a_rules[idx, pos][:, None], u_vals[None, :]),
+        r_key = (stage, implicator, bool(shoulder_edges), int(x1_pts), int(x2_pts), float(y_step))
+        if r_key not in _OSFI_RTABLE_CACHE:
+            r_tables = np.asarray(
+                self.implicator_fn(self.a_rules[:, :, None], self.b_rules[:, None, :]),
                 dtype=float,
             )
-            self._rule_pos_idx.append(pos)
-            self._rule_u_inv.append(u_inv)
-            self._rule_r_pos_u.append(r_pu)
+            rule_pos_idx: list[np.ndarray] = []
+            rule_u_inv: list[np.ndarray] = []
+            rule_r_pos_u: list[np.ndarray] = []
+            for idx in range(len(self.rules)):
+                pos = np.flatnonzero(self.a_rules[idx] > 0.0)
+                u_vals, u_inv = np.unique(self.b_rules[idx], return_inverse=True)
+                r_pu = np.asarray(
+                    self.implicator_fn(self.a_rules[idx, pos][:, None], u_vals[None, :]),
+                    dtype=float,
+                )
+                rule_pos_idx.append(pos)
+                rule_u_inv.append(u_inv)
+                rule_r_pos_u.append(r_pu)
+            _OSFI_RTABLE_CACHE[r_key] = (
+                r_tables,
+                rule_pos_idx,
+                rule_u_inv,
+                rule_r_pos_u,
+            )
+
+        (
+            self.r_tables,
+            self._rule_pos_idx,
+            self._rule_u_inv,
+            self._rule_r_pos_u,
+        ) = _OSFI_RTABLE_CACHE[r_key]
 
     def _init_kwargs(self) -> dict[str, Any]:
         return {
@@ -461,9 +483,12 @@ class OSFIDJInference:
         self.cache_dir.mkdir(parents=True, exist_ok=True)
         cfg_hash = stage_eng.config_hash()
         cache_file = self.cache_dir / f"lut_osfi_dj_{stage_eng.stage}_{cfg_hash}.npz"
+        cache_key = str(cache_file.resolve())
         if cache_file.exists():
+            if cache_key in _OSFI_MEM_LUT_CACHE:
+                return _OSFI_MEM_LUT_CACHE[cache_key]
             data = np.load(cache_file)
-            return {
+            loaded = {
                 "x1_lut": data["x1_lut"],
                 "x2_lut": data["x2_lut"],
                 "table": data["table"],
@@ -472,6 +497,8 @@ class OSFIDJInference:
                 "cache_file": str(cache_file),
                 "from_cache": True,
             }
+            _OSFI_MEM_LUT_CACHE[cache_key] = loaded
+            return loaded
 
         if stage_eng.stage == "fc1":
             x1_lut = np.arange(0.0, 12.0 + 0.1, 0.25, dtype=float)
