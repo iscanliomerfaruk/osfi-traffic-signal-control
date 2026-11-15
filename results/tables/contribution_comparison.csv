@@ -15,6 +15,6 @@ Performance Metric,Baseline (OSFI-DJ-S),Proposed (OSFI-DJ-NS),Change
 "Average Delay [s/veh] — Peak (1100→1800→1100 veh/h), σ_q=15 m, p_miss=0.1",38.63 ± 0.54,38.39 ± 0.61,-0.24 s/veh (-0.63%)
 "Throughput [veh/h] — Peak (1100→1800→1100 veh/h), σ_q=10 m, p_miss=0.0",1627.6 ± 15.5,1627.1 ± 15.8,-0.5 veh (-0.03%)
 "Mean Queue Length [m/lane] — Peak (1100→1800→1100 veh/h), σ_q=10 m, p_miss=0.0",14.20 ± 0.30,13.97 ± 0.35,-0.23 m/lane (-1.63%)
-"Execution Time per Inference (Direct, 10k calls) [ms/call]",1.296 ms,7.614 ms,+6.318 ms (+487.4%)
-"Execution Time per Inference (2D LUT Lookup, 10k calls) [µs/call]",21.06 µs (0.02106 ms),21.16 µs (0.02116 ms),+0.10 µs (+0.5%)
+"Execution Time per Inference (Direct, 10k calls) [ms/call]",1.303 ms,7.760 ms,+6.457 ms (+495.6%)
+"Execution Time per Inference (2D LUT Lookup, 10k calls) [µs/call]",20.76 µs (0.02076 ms),20.62 µs (0.02062 ms),-0.15 µs (-0.7%)
 Offline LUT Precomputation Build Time (FC1 + FC2) [s],0.92 s,3.92 s,+2.99 s (+323.7%)

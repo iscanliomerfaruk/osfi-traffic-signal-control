@@ -136,14 +136,14 @@
 ## 2. Stage 3 Execution Summary and Wall-Clock Runtimes
 
 - **Random seeds:** `30` common-random-number seeds (`202501` .. `202530`)
-- **LUT precomputation & 500-point error verification time:** `131.23 s`
-- **10,000-call `time.perf_counter` direct & LUT inference benchmark time:** `89.52 s`
-  - `OSFI-DJ-S` Direct: `1.296 ms/call` | 2D LUT: `21.06 µs/call` | LUT build (FC1+FC2): `0.92 s`
-  - `OSFI-DJ-NS` Direct: `7.614 ms/call` | 2D LUT: `21.16 µs/call` | LUT build (FC1+FC2): `3.92 s`
-- **Experiment A wall-clock time** (`4 scenarios x 7 controllers x 30 seeds = 840 runs`): `6.98 s`
-- **Experiment B wall-clock time** (`2 scenarios x 12 noise cells x 9 controllers x 30 seeds = 6480 runs`): `59.03 s`
-- **Experiment C wall-clock time** (`1 scenario x 9 ablation variants x 30 seeds = 270 runs`): `2.96 s`
-- **Total `run_contribution.py` wall-clock time:** `290.72 s`
+- **LUT precomputation & 500-point error verification time:** `6.14 s`
+- **10,000-call `time.perf_counter` direct & LUT inference benchmark time:** `91.04 s`
+  - `OSFI-DJ-S` Direct: `1.303 ms/call` | 2D LUT: `20.76 µs/call` | LUT build (FC1+FC2): `0.92 s`
+  - `OSFI-DJ-NS` Direct: `7.760 ms/call` | 2D LUT: `20.62 µs/call` | LUT build (FC1+FC2): `3.92 s`
+- **Experiment A wall-clock time** (`4 scenarios x 7 controllers x 30 seeds = 840 runs`): `6.69 s`
+- **Experiment B wall-clock time** (`2 scenarios x 12 noise cells x 9 controllers x 30 seeds = 6480 runs`): `57.64 s`
+- **Experiment C wall-clock time** (`1 scenario x 9 ablation variants x 30 seeds = 270 runs`): `2.90 s`
+- **Total `run_contribution.py` wall-clock time:** `165.41 s`
 
 ## 3. Stage 3 Lookup Table (LUT) 500-Point Off-Grid Interpolation Error Summary
 

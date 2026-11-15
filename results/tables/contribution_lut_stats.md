@@ -1,6 +1,6 @@
 # Lookup Table (LUT) Build Time and Interpolation Error Report
 
-- **Total LUT preparation wall-clock time:** `131.23 s`
+- **Total LUT preparation wall-clock time:** `6.14 s`
 - **Sum of single-LUT build times across `50` cached tables:** `125.98 s`
 
 ## 1. Off-Grid Bilinear Interpolation Accuracy (`500` Random Points per Stage vs. Direct Inference)

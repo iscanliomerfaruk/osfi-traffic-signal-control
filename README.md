@@ -314,7 +314,7 @@ $$B^*_i(y) = \arg\min_{b \in [0, 1]} \sum_{x \in X} \bigl| I(A_i(x), B_i(y)) - I
 
 ### 2. Tekil-Olmayan Motorlar, Ölü Bölge Haritası ve 2B LUT Hızlandırması
 
-- **Hızlı 2B LUT Önbelleği (`50` `.npz` Tablosu, [`results/tables/contribution_lut_stats.md`](results/tables/contribution_lut_stats.md)):** Doğrudan çıkarım `OSFI-DJ-NS` için $7.614\text{ ms/çağrı}$ (`OSFI-DJ-S` $1.296\text{ ms/çağrı}$) tutarken, 2B arama tabloları çalışma zamanını **`21.16 µs/çağrı`** ($360\times$ hızlanma; $500$ rastgele ızgara-dışı noktada medyan hata $\le 0.0127\text{ s}$) düzeyine indirir.
+- **Hızlı 2B LUT Önbelleği (`50` `.npz` Tablosu, [`results/tables/contribution_lut_stats.md`](results/tables/contribution_lut_stats.md)):** Doğrudan çıkarım `OSFI-DJ-NS` için $7.760\text{ ms/çağrı}$ (`OSFI-DJ-S` $1.303\text{ ms/çağrı}$) tutarken, 2B arama tabloları çalışma zamanını **`20.62 µs/çağrı`** ($376\times$ hızlanma; $500$ rastgele ızgara-dışı noktada medyan hata $\le 0.0127\text{ s}$) düzeyine indirir.
 - **Ölü Bölge Haritası ve Birleşik Geri-Düşüş:** Şekil `dead_zone_map.png`, Łukasiewicz AND + $\sigma \times 1.0$ altında giriş düzleminin **%5.0**'ini kaplayan 9 elmas ölü bölgeyi ve bunların `and_operator = min` veya `mf_sigma_scale = 1.5` ile **%0.0**'a indirgendiğini gösterir.
 
 ![OSFI-DJ ve CRI Kontrol Yüzeyleri](results/figures/control_surfaces_osfi.png)
@@ -362,8 +362,8 @@ $$B^*_i(y) = \arg\min_{b \in [0, 1]} \sum_{x \in X} \bigl| I(A_i(x), B_i(y)) - I
 | Average Delay — Peak ($\sigma_q=0\text{ m}, p_{\text{miss}}=0.0$) | 26.26 ± 0.42 s | **25.98 ± 0.42 s** | -0.28 s (-1.05%) |
 | Average Delay — Peak ($\sigma_q=10\text{ m}, p_{\text{miss}}=0.0$) | 35.77 ± 0.53 s | **35.20 ± 0.65 s** | -0.57 s (-1.59%) |
 | Average Delay — Peak ($\sigma_q=10\text{ m}, p_{\text{miss}}=0.1$) | 36.01 ± 0.51 s | **35.34 ± 0.66 s** | -0.67 s (-1.87%) |
-| Execution Time per Inference (Direct, 10k calls) | 1.296 ms | 7.614 ms | +6.318 ms (+487.4%) |
-| Execution Time per Inference (2D LUT Lookup, 10k calls) | 21.06 µs | 21.16 µs | +0.10 µs (+0.5%) |
+| Execution Time per Inference (Direct, 10k calls) | 1.303 ms | 7.760 ms | +6.457 ms (+495.6%) |
+| Execution Time per Inference (2D LUT Lookup, 10k calls) | 20.76 µs | 20.62 µs | -0.15 µs (-0.7%) |
 | Offline LUT Precomputation Build Time (FC1 + FC2) | 0.92 s | 3.92 s | +2.99 s (+323.7%) |
 
 ### 3. Deney B — Sensör Gürültüsü Izgarası ($\sigma_q \times p_{\text{miss}}$, `6,480` Koşu)
