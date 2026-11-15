@@ -357,6 +357,7 @@ def measure_stage_lut_interpolation_error(
         "n_samples": float(n_samples),
         "max_abs_error": float(np.max(abs_errors)),
         "mean_abs_error": float(np.mean(abs_errors)),
+        "median_abs_error": float(np.median(abs_errors)),
         "p95_abs_error": float(np.percentile(abs_errors, 95)),
     }
 
