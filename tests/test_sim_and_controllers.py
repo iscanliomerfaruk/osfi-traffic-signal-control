@@ -138,3 +138,63 @@ def test_noisy_sensor_common_random_numbers_and_bounds() -> None:
     assert s2_2 == 10.0
     assert s1_2 > s1_0
 
+
+def test_gpe_first_never_switches_when_ext2_at_least_1_and_under_gmax() -> None:
+    """Verify gpe_first never switches while Extension2 >= 1, q_cur > 0, and green < G_max."""
+    from osfi_tsc.sim.intersection import SensorReading
+
+    ctrl = FuzzyController(MamdaniInference(), g_min=7, g_max=60, spm_mode="gpe_first")
+    reading = SensorReading(
+        t=7.0,
+        queues_m={"E": 15.0, "S": 55.0, "W": 40.0, "N": 30.0},
+        queues_veh={"E": 4, "S": 16, "W": 11, "N": 9},
+        arrival_rates={"E": 4.0, "S": 6.0, "W": 3.0, "N": 3.0},
+        arrivals_this_step={"E": 0, "S": 1, "W": 0, "N": 0},
+        active_phase="E",
+        green_elapsed=7,
+        in_intergreen=False,
+    )
+    cmd = ctrl.step(7.0, reading)
+    assert cmd == "E"
+    assert ctrl.decision_log[-1]["extension2"] >= 1.0
+    assert ctrl.decision_log[-1]["action"].startswith("extend_")
+
+    ctrl_preempt = FuzzyController(
+        MamdaniInference(), g_min=7, g_max=60, spm_mode="preempt"
+    )
+    cmd_preempt = ctrl_preempt.step(7.0, reading)
+    assert cmd_preempt == "S"
+    assert ctrl_preempt.decision_log[-1]["action"] == "switch_longer_queue"
+
+
+def test_mamdani_thrashing_guard_mean_green_above_gmin_plus_2() -> None:
+    """Verify Mamdani mean green duration in heavy scenario is strictly above G_min + 2 s."""
+    sim = IntersectionSimulator(warmup_s=300, measurement_s=1800)
+    ctrl = FuzzyController(MamdaniInference(), g_min=7, g_max=60, spm_mode="gpe_first")
+    scen = ScenarioDemand.from_name("heavy")
+    res = sim.run(ctrl, scen, seed=202501, controller_name="Mamdani")
+    assert len(res.green_durations_measurement) > 0
+    mean_green = float(np.mean(res.green_durations_measurement))
+    assert mean_green > float(ctrl.g_min + 2), f"Expected mean_green > 9.0s, got {mean_green:.2f}s"
+
+
+def test_actuated_does_not_gap_out_while_queue_positive() -> None:
+    """Verify ActuatedController does not gap out while its current queue > 0 and green < G_max."""
+    from osfi_tsc.sim.intersection import SensorReading
+
+    ctrl = ActuatedController(g_min=7, unit_extension=3, g_max=60, initial_phase="E")
+    for t in range(1, 25):
+        reading = SensorReading(
+            t=float(t),
+            queues_m={"E": 21.0, "S": 35.0, "W": 14.0, "N": 14.0},
+            queues_veh={"E": 6, "S": 10, "W": 4, "N": 4},
+            arrival_rates={"E": 0.0, "S": 3.0, "W": 1.0, "N": 1.0},
+            arrivals_this_step={"E": 0, "S": 1, "W": 0, "N": 0},
+            active_phase="E",
+            green_elapsed=t,
+            in_intergreen=False,
+        )
+        cmd = ctrl.step(float(t), reading)
+        assert cmd == "E", f"Actuated gapped out at t={t} despite q_E=21.0 m > 0"
+
+

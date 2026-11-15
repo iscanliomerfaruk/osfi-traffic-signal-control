@@ -65,6 +65,7 @@ demand:
 controller:
   g_min: 7.0
   g_max: 60.0
+  spm_mode: "gpe_first"
   webster_cycle_bounds: [40.0, 180.0]
   actuated_unit_extension: 3.0
 

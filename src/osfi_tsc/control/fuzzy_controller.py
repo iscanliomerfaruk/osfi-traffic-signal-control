@@ -52,10 +52,14 @@ class FuzzyController:
         g_min: int = 7,
         g_max: int = 60,
         initial_phase: str = "E",
+        spm_mode: str = "gpe_first",
     ) -> None:
+        if spm_mode not in ("gpe_first", "preempt"):
+            raise ValueError(f"Unsupported spm_mode: {spm_mode}")
         self.engine = engine
         self.g_min = int(g_min)
         self.g_max = int(g_max)
+        self.spm_mode = spm_mode
         self.current_phase = initial_phase
         self._target_green = int(g_min)
         self._internal_green_elapsed = 0
@@ -104,10 +108,17 @@ class FuzzyController:
         q_others: float,
     ) -> None:
         shoulder = getattr(self.engine, "shoulder_edges", True)
-        m_arr = arrival_rate_memberships(lam_cur, shoulder_edges=shoulder)
-        m_qcur = queue_length_memberships(q_cur, shoulder_edges=shoulder)
+        sigma_scale = float(getattr(self.engine, "mf_sigma_scale", 1.0))
+        m_arr = arrival_rate_memberships(
+            lam_cur, shoulder_edges=shoulder, sigma_scale=sigma_scale
+        )
+        m_qcur = queue_length_memberships(
+            q_cur, shoulder_edges=shoulder, sigma_scale=sigma_scale
+        )
         m_ext1 = extension_input_memberships(ext1, shoulder_edges=shoulder)
-        m_qoth = queue_length_memberships(q_others, shoulder_edges=shoulder)
+        m_qoth = queue_length_memberships(
+            q_others, shoulder_edges=shoulder, sigma_scale=sigma_scale
+        )
 
         self.input_coverage_counts["arrival_rate"][dominant_linguistic_term(m_arr)] += 1
         self.input_coverage_counts["queue_current"][dominant_linguistic_term(m_qcur)] += 1
@@ -156,6 +167,78 @@ class FuzzyController:
 
         ext1, ext2 = self.engine.infer_gpe(lam_cur, q_cur, q_others_max)
         self._record_input_coverage(lam_cur, q_cur, ext1, q_others_max)
+
+        if self.spm_mode == "gpe_first":
+            if q_others_max <= 1e-9:
+                self._target_green = green_elapsed + 1
+                self._internal_green_elapsed = green_elapsed + 1
+                action_name = (
+                    "stay_empty"
+                    if max(queues_m.values()) <= 1e-9
+                    else "stay_no_competing_queue"
+                )
+                self.decision_log.append(
+                    {
+                        "time": t,
+                        "phase": self.current_phase,
+                        "green_elapsed": green_elapsed,
+                        "lambda_current": lam_cur,
+                        "q_current_m": q_cur,
+                        "q_others_max_m": q_others_max,
+                        "extension1": ext1,
+                        "extension2": ext2,
+                        "action": action_name,
+                        "next_phase": self.current_phase,
+                    }
+                )
+                return self.current_phase
+
+            if ext2 >= 1.0 and q_cur > 1e-9 and green_elapsed < self.g_max:
+                ext_steps = int(round(ext2))
+                self._target_green = min(self.g_max, green_elapsed + ext_steps)
+                self._internal_green_elapsed = green_elapsed + 1
+                self.decision_log.append(
+                    {
+                        "time": t,
+                        "phase": self.current_phase,
+                        "green_elapsed": green_elapsed,
+                        "lambda_current": lam_cur,
+                        "q_current_m": q_cur,
+                        "q_others_max_m": q_others_max,
+                        "extension1": ext1,
+                        "extension2": ext2,
+                        "action": f"extend_{ext_steps}s",
+                        "next_phase": self.current_phase,
+                    }
+                )
+                return self.current_phase
+
+            next_phase = self.select_next_phase_nps(
+                queues_m, self.current_phase, exclude_current=True
+            )
+            reason = (
+                "switch_max_green"
+                if green_elapsed >= self.g_max
+                else ("switch_queue_cleared" if q_cur <= 1e-9 else "switch_short_ext")
+            )
+            self.decision_log.append(
+                {
+                    "time": t,
+                    "phase": self.current_phase,
+                    "green_elapsed": green_elapsed,
+                    "lambda_current": lam_cur,
+                    "q_current_m": q_cur,
+                    "q_others_max_m": q_others_max,
+                    "extension1": ext1,
+                    "extension2": ext2,
+                    "action": reason,
+                    "next_phase": next_phase,
+                }
+            )
+            self.current_phase = next_phase
+            self._target_green = self.g_min
+            self._internal_green_elapsed = 0
+            return next_phase
 
         if max(queues_m.values()) <= 1e-9:
             self._target_green = green_elapsed + 1

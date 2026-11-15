@@ -125,16 +125,17 @@ def build_controller(
 
     g_min = int(ctrl_cfg.get("g_min", 7))
     g_max = int(ctrl_cfg.get("g_max", 60))
+    spm_mode = str(ctrl_cfg.get("spm_mode", "gpe_first"))
 
     if name == "Mamdani":
         engine: Any = MamdaniInference(shoulder_edges=shoulder, grid_step=grid_step)
-        return FuzzyController(engine=engine, g_min=g_min, g_max=g_max)
+        return FuzzyController(engine=engine, g_min=g_min, g_max=g_max, spm_mode=spm_mode)
     if name == "Sugeno":
         engine = SugenoInference(shoulder_edges=shoulder)
-        return FuzzyController(engine=engine, g_min=g_min, g_max=g_max)
+        return FuzzyController(engine=engine, g_min=g_min, g_max=g_max, spm_mode=spm_mode)
     if name == "OSFI-literal":
         engine = OSFILiteralInference(shoulder_edges=shoulder)
-        return FuzzyController(engine=engine, g_min=g_min, g_max=g_max)
+        return FuzzyController(engine=engine, g_min=g_min, g_max=g_max, spm_mode=spm_mode)
     if name == "OSFI-DJ-S":
         engine = OSFIDJInference(
             implicator=implicator,
@@ -147,7 +148,7 @@ def build_controller(
             use_lut=use_lut,
             cache_dir=cache_dir,
         )
-        return FuzzyController(engine=engine, g_min=g_min, g_max=g_max)
+        return FuzzyController(engine=engine, g_min=g_min, g_max=g_max, spm_mode=spm_mode)
     if name == "CRI-NS":
         sig1, sig2 = compute_matched_input_sigmas(sigma_q=sq, p_miss=pm)
         engine = CRIInference(
@@ -160,7 +161,7 @@ def build_controller(
             use_lut=use_lut,
             cache_dir=cache_dir,
         )
-        return FuzzyController(engine=engine, g_min=g_min, g_max=g_max)
+        return FuzzyController(engine=engine, g_min=g_min, g_max=g_max, spm_mode=spm_mode)
     if name == "OSFI-DJ-NS":
         sig1, sig2 = compute_matched_input_sigmas(sigma_q=sq, p_miss=pm)
         engine = OSFIDJInference(
@@ -174,7 +175,7 @@ def build_controller(
             use_lut=use_lut,
             cache_dir=cache_dir,
         )
-        return FuzzyController(engine=engine, g_min=g_min, g_max=g_max)
+        return FuzzyController(engine=engine, g_min=g_min, g_max=g_max, spm_mode=spm_mode)
     if name == "OSFI-DJ-NS-mis":
         sig1_mis, sig2_mis = compute_matched_input_sigmas(sigma_q=5.0, p_miss=0.0)
         engine = OSFIDJInference(
@@ -188,7 +189,7 @@ def build_controller(
             use_lut=use_lut,
             cache_dir=cache_dir,
         )
-        return FuzzyController(engine=engine, g_min=g_min, g_max=g_max)
+        return FuzzyController(engine=engine, g_min=g_min, g_max=g_max, spm_mode=spm_mode)
     if name == "Webster":
         bounds = tuple(ctrl_cfg.get("webster_cycle_bounds", [40.0, 180.0]))
         return WebsterController(
