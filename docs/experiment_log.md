@@ -1,6 +1,8 @@
-# Experiment Execution Log (`Stage 1` & `Stage 2`)
+# Experiment Execution Log (`Stage 1`–`Stage 3`)
 
-## 1. Execution Summary and Wall-Clock Runtimes
+> **Note:** Sections 1–4 immediately below preserve the historical pre-calibration Stage 1–2 log; the authoritative Stage 3 sanity gates and rerun logs appear under `Sanity Gate Check` and `Stage 3 Rerun` below.
+
+## 1. Execution Summary and Wall-Clock Runtimes (Stage 1–2 Historical)
 
 - **Random seeds:** `30` common-random-number seeds (`202501` .. `202530`)
 - **Stream separation per seed:**

@@ -1,4 +1,4 @@
-# Design Assumptions and Modeling Decisions (`Stage 1` & `Stage 2`)
+# Design Assumptions and Modeling Decisions (`Stage 1`–`Stage 3`)
 
 This document records every ambiguity, omission, or text-versus-figure discrepancy in Esmaeili et al. (2025) and Deng & Jiang (2014), along with the corresponding engineering decision implemented in `osfi-tsc`.
 
