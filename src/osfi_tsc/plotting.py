@@ -1025,14 +1025,14 @@ def plot_ablation_bars(exp_c_sum_df: pd.DataFrame, out_dir: Path) -> list[Path]:
 
 def generate_all_figures(
     results_root: str | Path = "results",
-    figures_dir: str | Path = "figures",
+    figures_dir: str | Path = "results/figures",
 ) -> list[Path]:
-    """Generate all Stage 1 and Stage 2 PDF and PNG figures from saved experiment results."""
+    """Generate all PDF and PNG figures from saved experiment results."""
     res_path = Path(results_root)
     fig_path = Path(figures_dir)
 
     raw_df = pd.read_csv(res_path / "raw" / "reproduction_runs.csv")
-    summary_df = pd.read_csv(res_path / "summary" / "metrics_summary_ci.csv")
+    summary_df = pd.read_csv(res_path / "tables" / "metrics_summary_ci.csv")
 
     generated: list[Path] = []
     generated.extend(plot_mf_inputs_outputs(fig_path))
@@ -1042,8 +1042,8 @@ def generate_all_figures(
     generated.extend(plot_overall_delay_boxplot(raw_df, fig_path))
     generated.extend(plot_timeline_example(fig_path))
 
-    exp_b_path = res_path / "summary" / "contribution_exp_b_summary.csv"
-    exp_c_path = res_path / "summary" / "contribution_exp_c_summary.csv"
+    exp_b_path = res_path / "tables" / "contribution_exp_b_summary.csv"
+    exp_c_path = res_path / "tables" / "contribution_exp_c_summary.csv"
     generated.extend(plot_osfi_inference_example(fig_path))
     generated.extend(plot_control_surfaces_osfi(fig_path, cache_dir=res_path / "cache"))
     if exp_b_path.exists():

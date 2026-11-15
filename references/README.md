@@ -1,0 +1,16 @@
+# References (`references/`)
+
+All references cited in `README.md` and `docs/*.md`, formatted in IEEE style with verified DOIs taken directly from the reference paper's bibliography (`Esmaeili et al., 2025`) and `docs/`.
+
+1. M. Esmaeili, A. Anjomshoae, N. Shahsavari-Pour, P. Srisurin, and R. Banomyong, "An optimization similarity fuzzy inference method for traffic signal control at an isolated intersection," *Multimodal Transportation*, vol. 4, Art. no. 100234, 2025, doi: [10.1016/j.multra.2025.100234](https://doi.org/10.1016/j.multra.2025.100234).
+2. G. Deng and Y. Jiang, "Fuzzy reasoning method by optimizing the similarity of truth-tables," *Information Sciences*, vol. 288, pp. 290–313, 2014, doi: [10.1016/j.ins.2014.08.006](https://doi.org/10.1016/j.ins.2014.08.006).
+3. C. P. Pappis and E. H. Mamdani, "A fuzzy logic controller for a traffic junction," *IEEE Transactions on Systems, Man, and Cybernetics*, vol. 7, no. 10, pp. 707–717, 1977, doi: [10.1109/TSMC.1977.4309605](https://doi.org/10.1109/TSMC.1977.4309605).
+4. L. A. Zadeh, "Fuzzy sets," *Information and Control*, vol. 8, no. 3, pp. 338–353, 1965, doi: [10.1016/S0019-9958(65)90241-X](https://doi.org/10.1016/S0019-9958(65)90241-X).
+5. L. A. Zadeh, "Similarity relations and fuzzy orderings," *Information Sciences*, vol. 3, no. 2, pp. 177–200, 1971, doi: [10.1016/S0020-0255(71)80005-1](https://doi.org/10.1016/S0020-0255(71)80005-1).
+6. R. E. Bellman and L. A. Zadeh, "Decision-making in a fuzzy environment," *Management Science*, vol. 17, no. 4, pp. B-141–B-164, 1970, doi: [10.1287/mnsc.17.4.B141](https://doi.org/10.1287/mnsc.17.4.B141).
+7. D.-G. Wang, Y.-P. Meng, and H.-X. Li, "A fuzzy similarity inference method for fuzzy reasoning," *Computers & Mathematics with Applications*, vol. 56, no. 10, pp. 2445–2454, 2008, doi: [10.1016/j.camwa.2008.03.054](https://doi.org/10.1016/j.camwa.2008.03.054).
+8. M. Esmaeili and E. Eslami, "Intuitionistic fuzzy reasoning using the method of optimizing the similarity of truth tables," *Soft Computing*, vol. 23, no. 18, pp. 8765–8774, 2019, doi: [10.1007/s00500-018-3478-1](https://doi.org/10.1007/s00500-018-3478-1).
+9. M. E. M. Ali, A. Durdu, S. A. Celtek, and A. Yilmaz, "An adaptive method for traffic signal control based on fuzzy logic with Webster and modified Webster formula using SUMO traffic simulator," *IEEE Access*, vol. 9, pp. 102985–102997, 2021, doi: [10.1109/ACCESS.2021.3094270](https://doi.org/10.1109/ACCESS.2021.3094270).
+10. T. Jiang, Z. Wang, and F. Chen, "Urban traffic signals timing at four-phase signalized intersection based on optimized two-stage fuzzy control scheme," *Mathematical Problems in Engineering*, vol. 2021, no. 1, Art. no. 6693562, 2021, doi: [10.1155/2021/6693562](https://doi.org/10.1155/2021/6693562).
+11. J. Niittymäki and M. Pursula, "Signal control using fuzzy logic," *Fuzzy Sets and Systems*, vol. 116, no. 1, pp. 11–22, 2000, doi: [10.1016/S0165-0114(99)00034-2](https://doi.org/10.1016/S0165-0114(99)00034-2).
+12. Y. S. Murat and E. Gedizlioglu, "A fuzzy logic multi-phased signal control model for isolated junctions," *Transportation Research Part C: Emerging Technologies*, vol. 13, no. 1, pp. 19–36, 2005, doi: [10.1016/j.trc.2004.12.004](https://doi.org/10.1016/j.trc.2004.12.004).

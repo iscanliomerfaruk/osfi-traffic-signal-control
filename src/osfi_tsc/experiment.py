@@ -740,7 +740,7 @@ def run_all_experiments(
 
     out_dir = Path(output_root)
     raw_dir = out_dir / "raw"
-    sum_dir = out_dir / "summary"
+    sum_dir = out_dir / "tables"
     raw_dir.mkdir(parents=True, exist_ok=True)
     sum_dir.mkdir(parents=True, exist_ok=True)
 

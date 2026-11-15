@@ -17,12 +17,12 @@ def main() -> None:
         "--results",
         type=str,
         default="results",
-        help="Directory containing raw/ and summary/ experiment outputs.",
+        help="Directory containing raw/ and tables/ experiment outputs.",
     )
     parser.add_argument(
         "--output",
         type=str,
-        default="figures",
+        default="results/figures",
         help="Target directory for generated PDF and PNG figures.",
     )
     args = parser.parse_args()
